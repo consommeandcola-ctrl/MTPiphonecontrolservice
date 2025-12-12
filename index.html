@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v34.1</title>
+    <title>MTP Cloud Mobile v35.1</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -29,23 +29,29 @@
             padding-top: env(safe-area-inset-top, 10px);
             flex-shrink: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .role-pill { font-size: 10px; background: #4a5568; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
         
-        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
         .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
         .st-standby { background: #718096; color: white; }
         .st-completed { background: #2f855a; color: white; }
 
-        /* Stats Bar */
+        /* Stats Bar (Improved Visibility) */
         .stats-bar {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-            background: #2d3748; padding: 5px; border-radius: 6px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            background: #fff; padding: 8px; border-radius: 8px; /* White bg for visibility */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            color: #2d3748;
         }
         .stat-group { display: flex; flex-direction: column; align-items: center; }
-        .stat-label { font-size: 9px; color: #a0aec0; margin-bottom: 2px; }
-        .stat-vals { display: flex; gap: 8px; font-size: 13px; font-weight: bold; font-family: monospace; }
-        .c-red { color: #fc8181; } .c-yel { color: #f6e05e; } .c-blu { color: #63b3ed; }
+        .stat-label { font-size: 10px; font-weight: bold; color: #4a5568; margin-bottom: 2px; }
+        .stat-vals { display: flex; gap: 10px; font-size: 16px; font-weight: 900; font-family: monospace; }
+        
+        /* High contrast colors for white background */
+        .c-red { color: #e53e3e; } 
+        .c-yel { color: #d69e2e; } 
+        .c-blu { color: #3182ce; }
 
         /* --- Main Viewport --- */
         .main-viewport {
@@ -263,13 +269,13 @@
             
             <div id="stepRole">
                 <div class="role-grid">
-                    <div class="role-btn" onclick="selectRole('データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;">
-                        <span style="font-size:20px;">📊</span>システム管理者<br><span style="font-size:10px;">ログ確認</span>
+                    <div class="role-btn" onclick="selectRole('研究データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;">
+                        <span style="font-size:20px;">📊</span>研究データ管理者<br><span style="font-size:10px;">(認証あり・データDL)</span>
                     </div>
                     <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
                     <div class="role-btn" onclick="selectRole('チームリーダー')"><span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span></div>
-                    <div class="role-btn" onclick="selectRole('輸血責任者')"><span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span></div>
                     <div class="role-btn" onclick="selectRole('手技医師')"><span style="font-size:20px;">💉</span>手技医師</div>
+                    <div class="role-btn" onclick="selectRole('輸血責任者')"><span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span></div>
                     <div class="role-btn" onclick="selectRole('記録Ns')"><span style="font-size:20px;">📝</span>記録Ns</div>
                     <div class="role-btn" onclick="selectRole('介助Ns')"><span style="font-size:20px;">💊</span>介助Ns</div>
                     <div class="role-btn" onclick="selectRole('MTP搬送者')"><span style="font-size:20px;">🏃</span>MTP搬送者</div>
@@ -316,11 +322,14 @@
                 <span style="font-size:16px; font-weight:bold;">ID: <span id="hdPid">---</span></span>
                 <span id="hdRole" class="role-pill">Guest</span>
             </div>
-            <div id="hdStatus" class="status-badge st-standby">待機中</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <div id="hdStatus" class="status-badge st-standby">待機中</div>
+                <button class="btn btn-sm btn-outline" style="color:white; border-color:white; font-size:10px; padding:4px 8px;" onclick="exitSession()">退出</button>
+            </div>
         </div>
         
         <div class="stats-bar">
-            <div class="stat-group" style="border-right:1px solid #4a5568;">
+            <div class="stat-group" style="border-right:1px solid #e2e8f0;">
                 <span class="stat-label">📍 現場在庫 (未投与)</span>
                 <div class="stat-vals">
                     <span class="c-red">R<span id="sRBC">0</span></span>
@@ -478,6 +487,7 @@
         let currentSessionData = null;
         let hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}};
         let lastBloodState = "";
+        let bloodPopupShown = false; // Flag to track popup
         let unsubscribeInventory = null;
         let unsubscribeSession = null;
 
@@ -506,7 +516,7 @@
         // UI & NAVIGATION
         // =================================================================
         function selectRole(role) {
-            // --- 追加: 管理者ログイン認証 ---
+            // --- 管理者ログイン認証 ---
             if (ROLES.MANAGER.includes(role)) {
                 const id = prompt("管理者IDを入力してください");
                 if (id !== "185383") return alert("IDが正しくありません");
@@ -558,6 +568,28 @@
             document.getElementById('stepRole').classList.remove('hidden');
             document.getElementById('stepSession').classList.add('hidden');
             if(unsubscribeInventory) unsubscribeInventory();
+        }
+
+        function exitSession() {
+            if(!currentSessionId) return;
+            // Reset state
+            currentSessionId = null;
+            currentSessionData = null;
+            bloodPopupShown = false;
+            lastBloodState = "";
+            
+            // Unsubscribe listeners
+            if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession=null; }
+            
+            // UI Reset
+            document.getElementById('loginModal').classList.add('active');
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
+            // Default to Action Tab for next load
+            document.getElementById('tabAction').classList.add('active-view');
+            // Back to session list (skip role selection if already selected, or could go back to role)
+            // Keeping role is usually more convenient
+            document.getElementById('stepSession').classList.remove('hidden');
+            document.getElementById('stepRole').classList.add('hidden');
         }
 
         function changeTab(tabId, navEl) {
@@ -683,7 +715,6 @@
         // =================================================================
         function loadActiveSessions() {
             const list = document.getElementById('sessionList');
-            // Load ALL sessions
             db.collection("mtp_sessions").orderBy("start_time", "desc").limit(20).onSnapshot(snap => {
                 if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:20px; color:#a0aec0;'>なし</div>"; return; }
                 list.innerHTML = snap.docs.map(doc => {
@@ -730,6 +761,10 @@
             currentSessionId = id;
             document.getElementById('hdPid').textContent = id;
             document.getElementById('loginModal').classList.remove('active');
+            
+            // Reset local flags
+            lastBloodState = "";
+            bloodPopupShown = false; 
             
             const isDoc = ROLES.DOCTOR.includes(myRole);
             const isCE = ROLES.CE.includes(myRole);
@@ -788,20 +823,26 @@
             document.getElementById('sFFP').textContent = s.FFP;
             document.getElementById('sPC').textContent = s.PC;
 
-            // Blood Popup Logic
-            const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
-            if(lastBloodState !== "" && lastBloodState !== currentBlood && data.blood_res.abo) {
-                document.getElementById('bloodPopupText').textContent = currentBlood;
-                const pop = document.getElementById('bloodPopup');
-                pop.classList.remove('active');
-                void pop.offsetWidth; // trigger reflow
-                pop.classList.add('active');
-                setTimeout(()=>pop.classList.remove('active'), 3000);
-            }
-            lastBloodState = currentBlood;
-
-            const bb = document.getElementById('bloodBig');
-            if(data.blood_res && data.blood_res.abo) {
+            // Blood Popup Logic: Only if BOTH are present, Changed, and Not Shown yet
+            if(data.blood_res.abo && data.blood_res.rh) {
+                const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
+                
+                // If it's a new determined state AND we haven't shown it this session
+                if(lastBloodState !== currentBlood && lastBloodState !== "" && !bloodPopupShown) {
+                    document.getElementById('bloodPopupText').textContent = currentBlood;
+                    const pop = document.getElementById('bloodPopup');
+                    pop.classList.remove('active');
+                    void pop.offsetWidth; // trigger reflow
+                    pop.classList.add('active');
+                    setTimeout(()=>pop.classList.remove('active'), 3000);
+                    bloodPopupShown = true;
+                }
+                
+                // Init lastBloodState if first load (don't show popup)
+                if(lastBloodState === "") lastBloodState = currentBlood;
+                
+                // Update Big Display
+                const bb = document.getElementById('bloodBig');
                 bb.classList.add('show');
                 document.getElementById('bloodBigText').textContent = currentBlood;
             }
@@ -935,11 +976,19 @@
                 const d = doc.data();
                 const item = d.boxes[bIdx].items[iIdx];
                 
+                // Inventory Check Logic
                 if(nextSt === 'shipped' && item.status !== 'shipped') {
                     let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
                     let ty = item.type.split('_')[0] || 'O';
+                    
+                    if(hospitalStock[p][ty] < item.units) {
+                        alert(`⚠️ 在庫不足！\n${p}(${ty}型) は残り ${hospitalStock[p][ty]} 単位しかありません。\n在庫マスターを補充してください。`);
+                        return; // Abort transaction
+                    }
+
                     db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
                 }
+
                 if(nextSt === 'completed') {
                     let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
                     t.update(ref, { [`used.${p}`]: firebase.firestore.FieldValue.increment(item.units) });
@@ -958,6 +1007,27 @@
                 const box = d.boxes[bIdx];
                 let count = 0;
                 
+                // Pre-check for batch stock
+                if(nextSt === 'shipped') {
+                    let required = {};
+                    box.items.forEach(i => {
+                        if(i.status === 'preparing') {
+                            let p = i.type.includes('RBC')?'RBC':i.type.includes('FFP')?'FFP':'PC';
+                            let ty = i.type.split('_')[0] || 'O';
+                            let key = `${p}_${ty}`;
+                            required[key] = (required[key] || 0) + i.units;
+                        }
+                    });
+                    
+                    for(let k in required) {
+                        let [p, ty] = k.split('_');
+                        if(hospitalStock[p][ty] < required[k]) {
+                            alert(`⚠️ 在庫不足！\n${p}(${ty}型) が足りません。\n必要: ${required[k]}, 在庫: ${hospitalStock[p][ty]}`);
+                            return; // Abort
+                        }
+                    }
+                }
+
                 box.items.forEach(i => {
                     let doUp = false;
                     if(nextSt==='preparing' && i.status==='pending') doUp=true;
@@ -1099,4 +1169,3 @@
     </script>
 </body>
 </html>
-
