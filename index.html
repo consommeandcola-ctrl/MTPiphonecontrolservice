@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v32.1</title>
+    <title>MTP Cloud Mobile v34.1</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -35,7 +35,7 @@
         .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
         .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
         .st-standby { background: #718096; color: white; }
-        .st-ended { background: #38a169; color: white; }
+        .st-completed { background: #2f855a; color: white; }
 
         /* Stats Bar */
         .stats-bar {
@@ -60,6 +60,16 @@
         }
         .tab-view.active-view { transform: translateX(0); display: block; }
 
+        /* Read Only Mode Overlay */
+        .read-only-overlay { position: relative; }
+        .read-only-overlay::after {
+            content: "参照モード (操作不可)";
+            position: absolute; inset: 0; background: rgba(255,255,255,0.6);
+            z-index: 50; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: #4a5568; font-size: 16px; text-shadow: 0 1px 2px white;
+            pointer-events: all;
+        }
+
         /* --- Bottom Nav --- */
         .bottom-nav {
             background: white; border-top: 1px solid #e2e8f0;
@@ -81,7 +91,7 @@
             display: flex; align-items: center; justify-content: space-between;
         }
 
-        /* Inventory Table (Dial/Stepper Style) */
+        /* Inventory Table */
         .stock-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-bottom: 10px; }
         .stock-table th { color: #4a5568; padding: 2px; font-size: 10px; text-align: center; }
         .stock-table td { padding: 0 4px; }
@@ -95,7 +105,7 @@
         .stock-display-btn.editable { color: #3182ce; border-color: #3182ce; background: #ebf8ff; cursor: pointer; }
         .stock-display-btn:active.editable { background: #bee3f8; }
 
-        /* Picker Overlay - Z-INDEX修正: 2000 -> 3000 */
+        /* Picker Overlay */
         #pickerModal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000;
             display: none; align-items: flex-end; opacity: 0; transition: opacity 0.2s;
@@ -253,10 +263,13 @@
             
             <div id="stepRole">
                 <div class="role-grid">
+                    <div class="role-btn" onclick="selectRole('データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;">
+                        <span style="font-size:20px;">📊</span>システム管理者<br><span style="font-size:10px;">(認証あり・データDL)</span>
+                    </div>
                     <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
                     <div class="role-btn" onclick="selectRole('チームリーダー')"><span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span></div>
-                    <div class="role-btn" onclick="selectRole('手技医師')"><span style="font-size:20px;">💉</span>手技医師</div>
                     <div class="role-btn" onclick="selectRole('輸血責任者')"><span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span></div>
+                    <div class="role-btn" onclick="selectRole('手技医師')"><span style="font-size:20px;">💉</span>手技医師</div>
                     <div class="role-btn" onclick="selectRole('記録Ns')"><span style="font-size:20px;">📝</span>記録Ns</div>
                     <div class="role-btn" onclick="selectRole('介助Ns')"><span style="font-size:20px;">💊</span>介助Ns</div>
                     <div class="role-btn" onclick="selectRole('MTP搬送者')"><span style="font-size:20px;">🏃</span>MTP搬送者</div>
@@ -272,9 +285,15 @@
                     <div id="masterStockTableWrapper" style="overflow-x:auto;"></div>
                 </div>
 
+                <div id="researchPanel" class="hidden" style="background:#f0fff4; padding:15px; border-radius:8px; border:1px solid #9ae6b4; margin-bottom:15px; text-align:center;">
+                    <h3 style="color:#276749; font-size:16px; margin-bottom:10px;">📊 研究用データベース</h3>
+                    <p style="font-size:11px; color:#4a5568; margin-bottom:15px;">完了した全症例の分析用データを<br>CSV形式で一括ダウンロードします。</p>
+                    <button class="btn btn-success" style="width:100%; padding:15px;" onclick="downloadAllResearchData()">📥 全症例データをCSV出力</button>
+                </div>
+
                 <div id="sessionList" style="display:flex; flex-direction:column; gap:8px;"></div>
                 
-                <div style="margin-top:20px; padding-top:15px; border-top:1px dashed #cbd5e0;">
+                <div id="newSessionBlock" style="margin-top:20px; padding-top:15px; border-top:1px dashed #cbd5e0;">
                     <div style="font-size:12px; font-weight:bold; margin-bottom:5px;">新規MTP発動</div>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" id="newPid" class="stock-input" placeholder="ID" style="border:1px solid #cbd5e0; border-radius:4px; flex:1; text-align:left; padding-left:10px; height:44px;">
@@ -394,7 +413,7 @@
             <div id="boxesContainer"></div>
 
             <div style="height:40px;"></div>
-            <button class="btn btn-outline" style="width:100%; margin-bottom:20px;" onclick="moveToWard()">🏥 病棟入室 (完結)</button>
+            <button id="btnComplete" class="btn btn-outline" style="width:100%; margin-bottom:20px;" onclick="moveToWard()">🏥 病棟入室 (完結)</button>
         </div>
 
         <div id="tabLog" class="tab-view">
@@ -457,7 +476,7 @@
         let myRole = "";
         let currentSessionId = null;
         let currentSessionData = null;
-        let hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}}; // Def: 6 and 10
+        let hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}};
         let lastBloodState = "";
         let unsubscribeInventory = null;
         let unsubscribeSession = null;
@@ -467,6 +486,7 @@
         let pickerValue = 0;
 
         const ROLES = {
+            MANAGER: ['研究データ管理者'],
             ADMIN: ['輸血検査部'],
             LEADER: ['チームリーダー'],
             DOCTOR: ['チームリーダー', '手技医師', '輸血責任者'],
@@ -486,13 +506,38 @@
         // UI & NAVIGATION
         // =================================================================
         function selectRole(role) {
+            // --- 追加: 管理者ログイン認証 ---
+            if (ROLES.MANAGER.includes(role)) {
+                const id = prompt("管理者IDを入力してください");
+                if (id !== "185383") return alert("IDが正しくありません");
+                
+                const pw = prompt("パスワードを入力してください");
+                if (pw !== "Love99mtp") return alert("パスワードが正しくありません");
+            }
+            // -----------------------------
+
             myRole = role;
             document.getElementById('hdRole').textContent = role;
             document.getElementById('stepRole').classList.add('hidden');
             document.getElementById('stepSession').classList.remove('hidden');
 
+            const isManager = ROLES.MANAGER.includes(role);
             const isAdmin = ROLES.ADMIN.includes(role);
             
+            // Research Manager
+            if(isManager) {
+                document.getElementById('researchPanel').classList.remove('hidden');
+                document.getElementById('sessionList').classList.add('hidden');
+                document.getElementById('newSessionBlock').classList.add('hidden');
+                document.getElementById('sessionTitle').textContent = "管理者メニュー";
+                return; // Early return for Manager
+            } else {
+                document.getElementById('researchPanel').classList.add('hidden');
+                document.getElementById('sessionList').classList.remove('hidden');
+                document.getElementById('newSessionBlock').classList.remove('hidden');
+            }
+
+            // Inventory Admin
             if(isAdmin) {
                 document.getElementById('adminStockPanel').classList.remove('hidden');
                 document.getElementById('sessionTitle').textContent = "在庫管理 / 症例選択";
@@ -522,7 +567,7 @@
             if(navEl) navEl.classList.add('active');
             
             const overlay = document.getElementById('chatOverlay');
-            if(tabId === 'tabLog') {
+            if(tabId === 'tabLog' && !document.getElementById('tabLog').classList.contains('read-only-overlay')) {
                 overlay.style.display = 'block';
                 renderCanned();
             } else {
@@ -597,25 +642,19 @@
             });
         }
 
-        // Picker Logic
         function openPicker(prod, type) {
             pickerTarget = {prod, type};
             const currentVal = (hospitalStock[prod] && hospitalStock[prod][type] !== undefined) ? hospitalStock[prod][type] : (prod==='PC'?10:6);
-            
             document.getElementById('pickerTitle').textContent = `${prod} (${type}型) 数量変更`;
-            
             const wheel = document.getElementById('pickerWheel');
             let html = "";
             const step = (prod === 'PC') ? 10 : 2;
             const max = (prod === 'PC') ? 200 : 100;
-            
             for(let i=0; i<=max; i+=step) {
                 html += `<div class="picker-item" data-val="${i}">${i}</div>`;
             }
             wheel.innerHTML = html;
-            
             document.getElementById('pickerModal').classList.add('show');
-            
             setTimeout(() => {
                 const targetIndex = currentVal / step;
                 wheel.scrollTop = targetIndex * 40;
@@ -628,7 +667,6 @@
             const index = Math.round(wheel.scrollTop / 40);
             const step = (pickerTarget.prod === 'PC') ? 10 : 2;
             const newVal = index * step;
-            
             db.collection("master").doc("inventory").update({
                 [`${pickerTarget.prod}.${pickerTarget.type}`]: newVal
             });
@@ -645,18 +683,25 @@
         // =================================================================
         function loadActiveSessions() {
             const list = document.getElementById('sessionList');
-            db.collection("mtp_sessions").where("status", "!=", "completed").onSnapshot(snap => {
+            // Load ALL sessions
+            db.collection("mtp_sessions").orderBy("start_time", "desc").limit(20).onSnapshot(snap => {
                 if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:20px; color:#a0aec0;'>なし</div>"; return; }
                 list.innerHTML = snap.docs.map(doc => {
                     const d = doc.data();
+                    const isCompleted = d.status === 'completed';
                     const delBtn = ROLES.LEADER.includes(myRole) ? `<button class="btn btn-sm btn-outline" style="color:#e53e3e; border-color:#e53e3e;" onclick="deleteSession('${doc.id}', event)">削除</button>` : '';
+                    
+                    const statusText = isCompleted ? "【完了】履歴" : "進行中";
+                    const statusStyle = isCompleted ? "color:#718096; background:#edf2f7;" : "color:#3182ce; background:#ebf8ff;";
+                    const btnText = isCompleted ? "参照" : "参加";
+                    
                     return `
                     <div class="session-item" style="background:#fff; border:1px solid #cbd5e0; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="joinSession('${doc.id}')">
                         <div>
-                            <div style="font-weight:bold; font-size:16px;">${d.id}</div>
+                            <div style="font-weight:bold; font-size:16px;">${d.id} <span style="font-size:10px; padding:2px 4px; border-radius:4px; ${statusStyle}">${statusText}</span></div>
                             <div style="font-size:11px; color:#718096;">${d.location} (${d.start_time})</div>
                         </div>
-                        <div style="display:flex; gap:5px;">${delBtn}<button class="btn btn-sm btn-primary">参加</button></div>
+                        <div style="display:flex; gap:5px;">${delBtn}<button class="btn btn-sm btn-primary">${btnText}</button></div>
                     </div>`;
                 }).join("");
             });
@@ -695,7 +740,7 @@
             if(isAdmin) document.getElementById('panelLab').classList.remove('hidden');
 
             unsubscribeSession = db.collection("mtp_sessions").doc(id).onSnapshot(doc => {
-                if(!doc.exists) { alert("症例が終了/削除されました"); location.reload(); return; }
+                if(!doc.exists) { alert("症例が削除されました"); location.reload(); return; }
                 currentSessionData = doc.data();
                 renderScreen(currentSessionData);
             });
@@ -705,10 +750,26 @@
         // RENDERING & ACTIONS
         // =================================================================
         function renderScreen(data) {
-            const sb = document.getElementById('hdStatus');
-            sb.className = `status-badge st-${data.status}`;
-            sb.textContent = data.status==='active' ? '発動中' : '終了';
+            const isReadOnly = data.status === 'completed';
             
+            // Set Read Only Overlay
+            if(isReadOnly) {
+                document.getElementById('tabAction').classList.add('read-only-overlay');
+                document.getElementById('tabInventory').classList.add('read-only-overlay');
+                document.getElementById('chatOverlay').style.display = 'none';
+                document.getElementById('btnComplete').style.display = 'none';
+                document.getElementById('hdStatus').textContent = "完了 (参照)";
+                document.getElementById('hdStatus').className = "status-badge st-completed";
+            } else {
+                document.getElementById('tabAction').classList.remove('read-only-overlay');
+                document.getElementById('tabInventory').classList.remove('read-only-overlay');
+                if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display = 'block';
+                document.getElementById('btnComplete').style.display = 'block';
+                const sb = document.getElementById('hdStatus');
+                sb.className = `status-badge st-${data.status}`;
+                sb.textContent = data.status==='active' ? '発動中' : '終了';
+            }
+
             document.getElementById('uRBC').textContent = data.used.RBC;
             document.getElementById('uFFP').textContent = data.used.FFP;
             document.getElementById('uPC').textContent = data.used.PC;
@@ -752,24 +813,28 @@
                 const hasPrep = b.items.some(i => i.status === 'preparing');
                 const hasShipped = b.items.some(i => i.status === 'shipped');
 
-                if(ROLES.ADMIN.includes(myRole)) {
-                    if(allPending) batchHtml = `<button class="btn btn-sm btn-warn" onclick="batchAction(${bIdx}, 'preparing')">一括準備</button>`;
-                    else if(hasPrep) batchHtml = `<button class="btn btn-sm btn-primary" onclick="batchAction(${bIdx}, 'shipped')">一括出庫</button>`;
-                }
-                if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole)) {
-                    if(hasShipped) batchHtml = `<button class="btn btn-sm btn-success" onclick="batchAction(${bIdx}, 'arrived')">一括到着</button>`;
+                if(!isReadOnly) {
+                    if(ROLES.ADMIN.includes(myRole)) {
+                        if(allPending) batchHtml = `<button class="btn btn-sm btn-warn" onclick="batchAction(${bIdx}, 'preparing')">一括準備</button>`;
+                        else if(hasPrep) batchHtml = `<button class="btn btn-sm btn-primary" onclick="batchAction(${bIdx}, 'shipped')">一括出庫</button>`;
+                    }
+                    if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole)) {
+                        if(hasShipped) batchHtml = `<button class="btn btn-sm btn-success" onclick="batchAction(${bIdx}, 'arrived')">一括到着</button>`;
+                    }
                 }
 
                 const rows = b.items.map((i, iIdx) => {
                     let btn = "";
-                    if(ROLES.ADMIN.includes(myRole)) {
-                        if(i.status==='pending') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'preparing')">準備</button>`;
-                        else if(i.status==='preparing') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'shipped')">出庫</button>`;
-                    }
-                    if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole) || ROLES.CE.includes(myRole)) {
-                        if(i.status==='shipped') btn = `<button class="btn btn-sm btn-success" onclick="updateItem(${bIdx},${iIdx},'arrived')">到着</button>`;
-                        else if(i.status==='arrived') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'infusing')">開始</button>`;
-                        else if(i.status==='infusing') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
+                    if(!isReadOnly) {
+                        if(ROLES.ADMIN.includes(myRole)) {
+                            if(i.status==='pending') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'preparing')">準備</button>`;
+                            else if(i.status==='preparing') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'shipped')">出庫</button>`;
+                        }
+                        if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole) || ROLES.CE.includes(myRole)) {
+                            if(i.status==='shipped') btn = `<button class="btn btn-sm btn-success" onclick="updateItem(${bIdx},${iIdx},'arrived')">到着</button>`;
+                            else if(i.status==='arrived') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'infusing')">開始</button>`;
+                            else if(i.status==='infusing') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
+                        }
                     }
                     return `
                     <div class="item-row">
@@ -950,10 +1015,60 @@
                 db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'ended' });
             }
         }
+        
+        // --- COMPLETION & RESEARCH LOGGING ---
         function moveToWard() {
-            if(confirm("病棟入室（完結）しますか？")) {
-                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'completed' }).then(()=>location.reload());
+            if(confirm("病棟入室として症例を完結しますか？\n（データは研究用DBに自動保存されます）")) {
+                const now = new Date();
+                const d = currentSessionData;
+                
+                // Calc Params
+                const findTime = (key) => { const f = d.logs.find(l=>l.m.includes(key)); return f?f.t:""; };
+                const extractedData = {
+                    id: d.id,
+                    location: d.location,
+                    date: now.toLocaleDateString(),
+                    startTime: d.start_time,
+                    endTime: now.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
+                    totalRBC: d.used.RBC,
+                    totalFFP: d.used.FFP,
+                    totalPC: d.used.PC,
+                    bloodType: `${d.blood_res.abo} ${d.blood_res.rh}`,
+                    firstOrder: findTime("オーダー"),
+                    firstShip: findTime("出庫"),
+                    firstArrive: findTime("到着")
+                };
+
+                // 1. Save to Research DB
+                db.collection("research_logs").doc(d.id).set(extractedData);
+
+                // 2. Mark session as completed
+                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'completed' })
+                .then(() => {
+                    alert("完了しました。データは保存されました。");
+                    location.reload();
+                });
             }
+        }
+
+        // --- ADMIN DOWNLOAD ---
+        function downloadAllResearchData() {
+            db.collection("research_logs").get().then(snap => {
+                if(snap.empty) { alert("データがありません"); return; }
+                
+                let csv = "ID,Location,Date,Start,End,RBC,FFP,PC,BloodType,FirstOrder,FirstShip,FirstArrive\n";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    csv += `${d.id},${d.location},${d.date},${d.startTime},${d.endTime},${d.totalRBC},${d.totalFFP},${d.totalPC},${d.bloodType},${d.firstOrder},${d.firstShip},${d.firstArrive}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `MTP_Research_Data_${new Date().toLocaleDateString()}.csv`;
+                a.click();
+            });
         }
 
         function sendChat() {
