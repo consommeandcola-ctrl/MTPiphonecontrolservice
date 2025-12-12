@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v35.2</title>
+    <title>MTP Cloud Mobile v36.0</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -157,12 +157,15 @@
             flex-direction: column; line-height: 1.2; transition: 0.1s;
         }
         .doc-btn:active { background: #ebf8ff; }
-        .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         
+        /* Flag Colors */
+        .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .bg-warn { background: #c05621 !important; }
         .bg-blood { background: #805ad5 !important; }
         .bg-med { background: #319795 !important; }
         .bg-ce { background: #d69e2e !important; }
+        /* NEW: Blood Type Selection Color */
+        .bg-selected-blood { background: #38a169 !important; color: white !important; border-color: #2f855a !important; }
 
         .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border-left: 4px solid #cbd5e0; }
         .box-card.active { border-left-color: #3182ce; background: #f7fcff; }
@@ -205,7 +208,6 @@
             background: #fff; border: 1px solid #cbd5e0; padding: 10px; border-radius: 8px; 
             display: flex; justify-content: space-between; align-items: center; position: relative;
         }
-        /* Delete button positioned absolute top-left for safety */
         .delete-icon-btn {
             position: absolute; top: -5px; left: -5px; width: 24px; height: 24px;
             background: #fff; border: 1px solid #e53e3e; color: #e53e3e; border-radius: 50%;
@@ -254,33 +256,15 @@
             
             <div id="stepRole">
                 <div class="role-grid">
-                    <div class="role-btn" onclick="selectRole('チームリーダー')">
-                        <span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span>
-                    </div>
-                    <div class="role-btn" onclick="selectRole('輸血責任者')">
-                        <span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span>
-                    </div>
-                    <div class="role-btn" onclick="selectRole('記録Ns')">
-                        <span style="font-size:20px;">📝</span>記録Ns
-                    </div>
-                    <div class="role-btn" onclick="selectRole('介助Ns')">
-                        <span style="font-size:20px;">💊</span>介助Ns
-                    </div>
-                    <div class="role-btn" onclick="selectRole('研修医')">
-                        <span style="font-size:20px;">💉</span>研修医
-                    </div>
-                    <div class="role-btn" onclick="selectRole('MTP搬送者')">
-                        <span style="font-size:20px;">🏃</span>MTP搬送者
-                    </div>
-                    <div class="role-btn" onclick="selectRole('臨床工学技師')">
-                        <span style="font-size:20px;">⚙️</span>臨床工学技師
-                    </div>
-                    <div class="role-btn" onclick="selectRole('輸血検査部')">
-                        <span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span>
-                    </div>
-                    <div class="role-btn" onclick="selectRole('研究データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;">
-                        <span style="font-size:20px;">📊</span>研究データ管理者<br><span style="font-size:10px;">データ確認</span>
-                    </div>
+                    <div class="role-btn" onclick="selectRole('チームリーダー')"><span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span></div>
+                    <div class="role-btn" onclick="selectRole('輸血責任者')"><span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span></div>
+                    <div class="role-btn" onclick="selectRole('記録Ns')"><span style="font-size:20px;">📝</span>記録Ns</div>
+                    <div class="role-btn" onclick="selectRole('介助Ns')"><span style="font-size:20px;">💊</span>介助Ns</div>
+                    <div class="role-btn" onclick="selectRole('研修医')"><span style="font-size:20px;">💉</span>研修医</div>
+                    <div class="role-btn" onclick="selectRole('MTP搬送者')"><span style="font-size:20px;">🏃</span>MTP搬送者</div>
+                    <div class="role-btn" onclick="selectRole('臨床工学技師')"><span style="font-size:20px;">⚙️</span>臨床工学技師</div>
+                    <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
+                    <div class="role-btn" onclick="selectRole('研究データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;"><span style="font-size:20px;">📊</span>研究データ管理者<br><span style="font-size:10px;">データ確認</span></div>
                 </div>
             </div>
 
@@ -502,7 +486,7 @@
             MANAGER: ['研究データ管理者'],
             ADMIN: ['輸血検査部'],
             LEADER: ['チームリーダー'],
-            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'], // 研修医 added
+            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'],
             NURSE: ['記録Ns', '介助Ns'],
             CE: ['臨床工学技師'],
             TRANS: ['MTP搬送者', '臨床工学技師']
@@ -570,10 +554,15 @@
 
         function exitSession() {
             if(!currentSessionId) return;
+            // 清掃
             currentSessionId = null;
             currentSessionData = null;
             bloodPopupShown = false;
             lastBloodState = "";
+            document.getElementById('bloodBigText').textContent = "";
+            document.getElementById('bloodBig').classList.remove('show');
+            document.querySelectorAll('.selected-abo, .selected-rh, .active').forEach(el => el.classList.remove('selected-abo', 'selected-rh', 'active', 'bg-selected-blood'));
+            
             if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession=null; }
             document.getElementById('loginModal').classList.add('active');
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
@@ -692,10 +681,7 @@
                 list.innerHTML = snap.docs.map(doc => {
                     const d = doc.data();
                     const isCompleted = d.status === 'completed';
-                    
-                    // Show delete button only for LEADER (Positioned absolute top-left of card)
-                    const delBtn = ROLES.LEADER.includes(myRole) ? 
-                        `<div class="delete-icon-btn" onclick="deleteSession('${doc.id}', event)">🗑️</div>` : '';
+                    const delBtn = ROLES.LEADER.includes(myRole) ? `<div class="delete-icon-btn" onclick="deleteSession('${doc.id}', event)">🗑️</div>` : '';
                     
                     const statusText = isCompleted ? "【完了】履歴" : "進行中";
                     const statusStyle = isCompleted ? "color:#718096; background:#edf2f7;" : "color:#3182ce; background:#ebf8ff;";
@@ -734,12 +720,14 @@
         }
 
         function joinSession(id) {
+            // Clean up old state first
+            lastBloodState = "";
+            bloodPopupShown = false; 
+            document.querySelectorAll('.bg-selected-blood').forEach(el=>el.classList.remove('bg-selected-blood'));
+
             currentSessionId = id;
             document.getElementById('hdPid').textContent = id;
             document.getElementById('loginModal').classList.remove('active');
-            
-            lastBloodState = "";
-            bloodPopupShown = false; 
             
             const isDoc = ROLES.DOCTOR.includes(myRole);
             const isCE = ROLES.CE.includes(myRole);
@@ -751,7 +739,6 @@
             if(isCE) document.getElementById('panelCE').classList.remove('hidden');
             if(isAdmin) document.getElementById('panelLab').classList.remove('hidden');
 
-            // Resident Restriction: Hide Declaration Block & Complete Button
             if(isResident) {
                 document.getElementById('declarationsBlock').style.display = 'none';
                 document.getElementById('btnComplete').style.display = 'none';
@@ -784,7 +771,6 @@
                 document.getElementById('tabAction').classList.remove('read-only-overlay');
                 document.getElementById('tabInventory').classList.remove('read-only-overlay');
                 if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display = 'block';
-                // Only show complete button if not resident (handled in joinSession, but safe here too)
                 if(myRole !== '研修医') document.getElementById('btnComplete').style.display = 'block';
                 const sb = document.getElementById('hdStatus');
                 sb.className = `status-badge st-${data.status}`;
@@ -809,7 +795,7 @@
             document.getElementById('sFFP').textContent = s.FFP;
             document.getElementById('sPC').textContent = s.PC;
 
-            // Blood Popup Logic
+            // Blood Popup
             const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
             if(data.blood_res.abo && data.blood_res.rh) {
                 if(lastBloodState !== "" && lastBloodState !== currentBlood && !bloodPopupShown) {
@@ -828,7 +814,21 @@
                 document.getElementById('bloodBigText').textContent = currentBlood;
             }
 
-            // Irregular Antibody Styles
+            // --- Updated Button Logic for Green Selection ---
+            // Clear all first
+            ['btnA','btnB','btnO','btnAB','btnRhP','btnRhM'].forEach(id => {
+                const b = document.getElementById(id);
+                if(b) b.classList.remove('bg-selected-blood');
+            });
+            if(data.blood_res.abo) {
+                document.getElementById('btn'+data.blood_res.abo).classList.add('bg-selected-blood');
+            }
+            if(data.blood_res.rh) {
+                const rid = data.blood_res.rh==='+' ? 'btnRhP' : 'btnRhM';
+                document.getElementById(rid).classList.add('bg-selected-blood');
+            }
+
+            // Irregular Antibody Styles (Default White)
             const btnNeg = document.getElementById('btnIrregNeg');
             const btnPos = document.getElementById('btnIrregPos');
             btnNeg.className = "btn btn-sm btn-outline"; 
@@ -912,7 +912,7 @@
             else { el.classList.remove('active-on', bgClass); }
         }
 
-        // ... (Logic functions similar to v35.1) ...
+        // ... (Remaining Logic kept same as stable v35.2) ...
         function orderMTP(type) {
             if (type === 2 && (!currentSessionData.blood_res || !currentSessionData.blood_res.abo)) {
                 return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
