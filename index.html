@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v36.0</title>
+    <title>MTP Cloud Mobile v36.1</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -164,7 +164,6 @@
         .bg-blood { background: #805ad5 !important; }
         .bg-med { background: #319795 !important; }
         .bg-ce { background: #d69e2e !important; }
-        /* NEW: Blood Type Selection Color */
         .bg-selected-blood { background: #38a169 !important; color: white !important; border-color: #2f855a !important; }
 
         .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border-left: 4px solid #cbd5e0; }
@@ -554,14 +553,14 @@
 
         function exitSession() {
             if(!currentSessionId) return;
-            // 清掃
+            // Clean
             currentSessionId = null;
             currentSessionData = null;
             bloodPopupShown = false;
             lastBloodState = "";
             document.getElementById('bloodBigText').textContent = "";
             document.getElementById('bloodBig').classList.remove('show');
-            document.querySelectorAll('.selected-abo, .selected-rh, .active').forEach(el => el.classList.remove('selected-abo', 'selected-rh', 'active', 'bg-selected-blood'));
+            document.querySelectorAll('.bg-selected-blood').forEach(el => el.classList.remove('bg-selected-blood'));
             
             if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession=null; }
             document.getElementById('loginModal').classList.add('active');
@@ -704,12 +703,13 @@
             const pid = document.getElementById('newPid').value.trim();
             const loc = document.getElementById('newLoc').value;
             if(!pid) return alert("IDを入力してください");
+            // 【重要】irreg:'' で初期化（白抜き開始）
             db.collection("mtp_sessions").doc(pid).set({
                 id: pid, location: loc, status: 'active',
                 start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
                 boxes: [], logs: [], chats: [],
                 used: {RBC:0, FFP:0, PC:0},
-                blood_res: {abo:'', rh:'', irreg:'neg'},
+                blood_res: {abo:'', rh:'', irreg:''}, 
                 flags: {}, meds: {}
             }).then(() => joinSession(pid));
         }
@@ -720,7 +720,7 @@
         }
 
         function joinSession(id) {
-            // Clean up old state first
+            // Clean
             lastBloodState = "";
             bloodPopupShown = false; 
             document.querySelectorAll('.bg-selected-blood').forEach(el=>el.classList.remove('bg-selected-blood'));
@@ -734,7 +734,6 @@
             const isAdmin = ROLES.ADMIN.includes(myRole);
             const isResident = (myRole === '研修医');
 
-            // Toggle Panels
             if(!isDoc) document.getElementById('panelDoctor').classList.add('hidden');
             if(isCE) document.getElementById('panelCE').classList.remove('hidden');
             if(isAdmin) document.getElementById('panelLab').classList.remove('hidden');
@@ -795,9 +794,9 @@
             document.getElementById('sFFP').textContent = s.FFP;
             document.getElementById('sPC').textContent = s.PC;
 
-            // Blood Popup
-            const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
+            // Blood Popup Logic
             if(data.blood_res.abo && data.blood_res.rh) {
+                const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
                 if(lastBloodState !== "" && lastBloodState !== currentBlood && !bloodPopupShown) {
                     document.getElementById('bloodPopupText').textContent = currentBlood;
                     const pop = document.getElementById('bloodPopup');
@@ -814,8 +813,7 @@
                 document.getElementById('bloodBigText').textContent = currentBlood;
             }
 
-            // --- Updated Button Logic for Green Selection ---
-            // Clear all first
+            // Green Selection Logic
             ['btnA','btnB','btnO','btnAB','btnRhP','btnRhM'].forEach(id => {
                 const b = document.getElementById(id);
                 if(b) b.classList.remove('bg-selected-blood');
@@ -828,15 +826,15 @@
                 document.getElementById(rid).classList.add('bg-selected-blood');
             }
 
-            // Irregular Antibody Styles (Default White)
+            // Irregular Antibody Styles
             const btnNeg = document.getElementById('btnIrregNeg');
             const btnPos = document.getElementById('btnIrregPos');
             btnNeg.className = "btn btn-sm btn-outline"; 
             btnPos.className = "btn btn-sm btn-outline";
             if(data.blood_res.irreg === 'neg') {
-                btnNeg.className = "btn btn-sm btn-success"; // Green
+                btnNeg.className = "btn btn-sm btn-success"; 
             } else if(data.blood_res.irreg === 'pos') {
-                btnPos.className = "btn btn-sm btn-danger"; // Red
+                btnPos.className = "btn btn-sm btn-danger";
             }
 
             const bc = document.getElementById('boxesContainer');
@@ -912,7 +910,7 @@
             else { el.classList.remove('active-on', bgClass); }
         }
 
-        // ... (Remaining Logic kept same as stable v35.2) ...
+        // ... (Remaining Logic kept as is) ...
         function orderMTP(type) {
             if (type === 2 && (!currentSessionData.blood_res || !currentSessionData.blood_res.abo)) {
                 return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
