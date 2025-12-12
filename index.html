@@ -2,226 +2,244 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MTP Cloud Mobile Ver.28.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MTP Cloud Mobile v32.1</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- 基本設定 --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* --- Reset & Base --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif; 
             background: #f0f2f5; 
-            height: 100vh; /* スマホのアドレスバー対策 */
             height: 100dvh; 
             color: #2d3748; 
             overflow: hidden; 
+            display: flex;
+            flex-direction: column;
         }
+        input, textarea, select { user-select: text; }
+
+        /* --- Header (Fixed) --- */
+        .app-header {
+            background: #1a202c; color: white; padding: 8px 10px;
+            padding-top: env(safe-area-inset-top, 10px);
+            flex-shrink: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .role-pill { font-size: 10px; background: #4a5568; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
         
-        .container { 
-            width: 100%; 
-            height: 100%; 
-            background: white; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden;
+        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
+        .st-standby { background: #718096; color: white; }
+        .st-ended { background: #38a169; color: white; }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+            background: #2d3748; padding: 5px; border-radius: 6px;
         }
+        .stat-group { display: flex; flex-direction: column; align-items: center; }
+        .stat-label { font-size: 9px; color: #a0aec0; margin-bottom: 2px; }
+        .stat-vals { display: flex; gap: 8px; font-size: 13px; font-weight: bold; font-family: monospace; }
+        .c-red { color: #fc8181; } .c-yel { color: #f6e05e; } .c-blu { color: #63b3ed; }
+
+        /* --- Main Viewport --- */
+        .main-viewport {
+            flex: 1; position: relative; overflow: hidden; background: #f7fafc;
+        }
+        .tab-view {
+            position: absolute; inset: 0; 
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 15px; padding-bottom: 80px;
+            transform: translateX(100%); transition: transform 0.25s ease-out;
+            display: none;
+        }
+        .tab-view.active-view { transform: translateX(0); display: block; }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            background: white; border-top: 1px solid #e2e8f0;
+            height: 60px; padding-bottom: env(safe-area-inset-bottom, 0);
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            flex-shrink: 0; z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #a0aec0; font-size: 10px; font-weight: bold; transition: 0.2s;
+        }
+        .nav-item.active { color: #3182ce; background: #ebf8ff; }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+
+        /* --- Components --- */
+        .section-title {
+            font-size: 14px; font-weight: bold; color: #2d3748;
+            border-left: 4px solid #3182ce; padding-left: 8px; margin: 15px 0 10px 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        /* Inventory Table (Dial/Stepper Style) */
+        .stock-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-bottom: 10px; }
+        .stock-table th { color: #4a5568; padding: 2px; font-size: 10px; text-align: center; }
+        .stock-table td { padding: 0 4px; }
         
-        /* --- ヘッダー (スマホ対応) --- */
-        .header { 
-            background: #1a202c; 
-            color: white; 
-            padding: 10px 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 3px solid #e53e3e; 
-            flex-shrink: 0; 
-            z-index: 10;
+        .stock-display-btn {
+            width: 100%; padding: 12px 0; text-align: center; 
+            font-size: 18px; font-weight: bold; color: #2d3748; font-family: monospace;
+            background: white; border: 1px solid #cbd5e0; border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .header h1 { font-size: 16px; font-weight: bold; }
-        .header-info { display: flex; gap: 8px; align-items: center; }
+        .stock-display-btn.editable { color: #3182ce; border-color: #3182ce; background: #ebf8ff; cursor: pointer; }
+        .stock-display-btn:active.editable { background: #bee3f8; }
+
+        /* Picker Overlay */
+        #pickerModal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000;
+            display: none; align-items: flex-end; opacity: 0; transition: opacity 0.2s;
+        }
+        #pickerModal.show { display: flex; opacity: 1; }
         
-        .status-badge { padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 11px; white-space: nowrap; }
-        .status-standby { background: #cbd5e0; color: #2d3748; }
-        .status-active { background: #e53e3e; color: white; animation: pulseRed 2s infinite; }
-        .status-ended { background: #2f855a; color: white; }
+        .picker-sheet {
+            background: white; width: 100%; border-radius: 16px 16px 0 0;
+            padding-bottom: env(safe-area-inset-bottom);
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+        #pickerModal.show .picker-sheet { transform: translateY(0); }
+
+        .picker-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; border-bottom: 1px solid #edf2f7; background: #f7fafc; border-radius: 16px 16px 0 0;
+        }
+        .picker-title { font-weight: bold; font-size: 14px; color: #4a5568; }
         
-        @keyframes pulseRed { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes pulseBlue { 0% { background-color: #2b6cb0; } 50% { background-color: #4299e1; } 100% { background-color: #2b6cb0; } }
+        .picker-wheel-container {
+            height: 200px; position: relative; overflow: hidden; background: white;
+        }
+        .picker-wheel {
+            height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
+            padding: 80px 0;
+        }
+        .picker-wheel::-webkit-scrollbar { display: none; }
         
-        .role-badge { background: #3182ce; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap; }
-        .patient-badge { background: #d69e2e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display:none; white-space: nowrap; }
-
-        /* --- メインレイアウト (スマホ最適化) --- */
-        .main-content { 
-            display: flex; 
-            flex: 1; 
-            overflow: hidden; 
-            flex-direction: column; /* スマホデフォルトは縦並び */
+        .picker-item {
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; color: #a0aec0;
+            scroll-snap-align: center; transition: 0.2s;
+        }
+        .picker-highlight {
+            position: absolute; top: 80px; left: 0; right: 0; height: 40px;
+            border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+            pointer-events: none; background: rgba(49, 130, 206, 0.05);
         }
 
-        /* PC/タブレット用スタイル（幅768px以上） */
-        @media (min-width: 768px) {
-            .main-content { flex-direction: row; }
-            .left-panel { width: 60%; border-right: 1px solid #e2e8f0; }
-            .right-panel { width: 40%; }
+        /* Order Buttons */
+        .mtp-btn {
+            width: 100%; padding: 12px; border-radius: 8px; border: none; color: white;
+            text-align: left; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden; transition: transform 0.1s;
         }
+        .mtp-btn:active { transform: scale(0.98); }
+        .mtp-btn-1 { background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%); }
+        .mtp-btn-2 { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); }
+        .mtp-head { font-size: 16px; font-weight: 900; display: block; margin-bottom: 2px; }
+        .mtp-sub { font-size: 11px; opacity: 0.9; }
 
-        .left-panel, .right-panel {
-            padding: 15px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* iOSでのスクロール滑らか化 */
+        /* Doc Grid */
+        .doc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+        .doc-btn {
+            padding: 8px 2px; border: 1px solid #cbd5e0; border-radius: 6px; background: white;
+            font-size: 11px; font-weight: bold; color: #4a5568; text-align: center;
+            min-height: 44px; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; line-height: 1.2; transition: 0.1s;
         }
+        .doc-btn:active { background: #ebf8ff; }
+        .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         
-        .left-panel { background: #fff; flex: 1; }
-        .right-panel { background: #f7fafc; flex: 1; border-top: 1px solid #e2e8f0; }
+        .bg-warn { background: #c05621 !important; }
+        .bg-blood { background: #805ad5 !important; }
+        .bg-med { background: #319795 !important; }
+        .bg-ce { background: #d69e2e !important; }
 
-        .section { margin-bottom: 20px; }
-        .section-title { 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #2d3748; 
-            margin-bottom: 10px; 
-            padding-bottom: 5px; 
-            border-bottom: 2px solid #edf2f7; 
-            display: flex; align-items: center; gap: 8px; 
+        /* Box Cards */
+        .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border-left: 4px solid #cbd5e0; }
+        .box-card.active { border-left-color: #3182ce; background: #f7fcff; }
+        .box-header { 
+            padding: 8px 10px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #edf2f7; 
+            display: flex; justify-content: space-between; align-items: center; 
         }
+        .box-title { font-weight: bold; font-size: 14px; color: #2d3748; }
+        .item-row { 
+            display: grid; grid-template-columns: 3fr 2fr 2fr; gap: 5px; 
+            padding: 8px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; font-size: 12px; 
+        }
+        .st-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; text-align: center; background: #edf2f7; color: #718096; white-space: nowrap; }
         
-        /* --- 在庫管理テーブル --- */
-        .stock-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 14px; background: white; }
-        .stock-table th { background: #2c5282; color: white; padding: 6px; text-align: center; border: 1px solid #4a5568; font-size: 12px; }
-        .stock-table td { padding: 0; text-align: center; border: 1px solid #cbd5e0; }
-        .stock-input { width: 100%; padding: 10px 2px; text-align: center; border: none; font-weight: bold; font-size: 18px; color: #2d3748; background: transparent; -webkit-appearance: none; border-radius: 0; }
-        .stock-input:focus { background: #fff7ed; outline: 2px solid #ed8936; }
-        .stock-input:disabled { background: #f7fafc; color: #4a5568; -webkit-text-fill-color: #4a5568; opacity: 1; }
-
-        /* --- ボタン類 (タッチ対応) --- */
-        .doctor-controls { 
-            background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; /* スマホは2列 */
-        }
-        @media (min-width: 768px) {
-            .doctor-controls { grid-template-columns: repeat(4, 1fr); }
-        }
-
-        .doc-btn { 
-            padding: 12px 5px; font-weight: bold; border-radius: 6px; cursor: pointer; 
-            border: 1px solid #cbd5e0; background: white; color: #718096; transition: all 0.2s; font-size: 12px; 
-            min-height: 50px; /* タップ領域確保 */
-            display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2;
-        }
-        .doc-btn.active-warn { background: #c05621 !important; color: white !important; border-color: #9c4221 !important; }
-        .doc-btn.active-purple { background: #805ad5 !important; color: white !important; border-color: #6b46c1 !important; }
-        .doc-btn.active-med { background: #319795 !important; color: white !important; border-color: #285e61 !important; } 
-        .doc-btn.active-rapid { background: #d69e2e !important; color: white !important; border-color: #b7791f !important; animation: pulseRed 2s infinite; }
-
-        .mtp-order-group { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; } /* スマホは1列 */
-        @media (min-width: 768px) { .mtp-order-group { grid-template-columns: 1fr 1fr; } }
-
-        .mtp-btn { 
-            padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; border: none; color: white; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: left; display: flex; flex-direction: column; 
-            justify-content: center; min-height: 80px; position: relative; 
-        }
-        .mtp-btn-1 { background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%); }
-        .mtp-btn-2 { background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%); }
-        .mtp-btn small { font-size: 11px; opacity: 0.9; font-weight: normal; margin-top: 4px; }
-
-        /* --- ラボ・在庫パネル --- */
-        .lab-panel { background: white; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e0; flex-shrink: 0; margin-bottom: 10px; }
-        .lab-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-        .lab-btn { 
-            flex: 1; padding: 12px; border: 1px solid #cbd5e0; background: #f7fafc; cursor: pointer; border-radius: 6px; 
-            font-weight: bold; color: #4a5568; font-size: 14px; min-height: 44px;
-        }
-        .lab-btn.selected-abo { background: #3182ce; color: white; border-color: #2b6cb0; }
-        .lab-btn.selected-rh { background: #805ad5; color: white; border-color: #6b46c1; }
-        .lab-btn.irreg-neg.active { background: #2f855a; color: white; }
-        .lab-btn.irreg-pos.active { background: #e53e3e; color: white; }
-
-        .blood-type-big-display { 
-            background: #c53030; color: white; padding: 10px; border-radius: 8px; 
-            text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 10px;
-            flex-shrink: 0; display: none; 
-        }
-        .blood-type-big-display.active { display: block; animation: fadeIn 0.5s; }
-        .blood-type-big-text { font-size: 32px; font-weight: 900; letter-spacing: 1px; line-height: 1; }
-
-        .inventory-summary { background: #edf2f7; padding: 10px; border-radius: 8px; flex-shrink: 0; margin-bottom: 10px; }
-        .inventory-grid { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; color: #2d3748; }
-        .inv-val { font-size: 20px; font-weight: bold; }
-        
-        /* --- ログ・チャット --- */
-        .log-wrapper { flex: 1; display: flex; flex-direction: column; min-height: 200px; margin-bottom: 10px; }
-        .tabs { display: flex; gap: 5px; margin-bottom: 0; flex-shrink: 0; }
-        .tab-btn { flex: 1; padding: 10px; background: #e2e8f0; border: none; font-weight: bold; color: #718096; border-radius: 6px 6px 0 0; font-size: 13px; }
-        .tab-btn.active { background: white; color: #2d3748; border-top: 3px solid #3182ce; }
-        
-        .log-container { 
-            flex: 1; background: white; border-radius: 0 0 6px 6px; padding: 10px; 
-            overflow-y: auto; display: flex; flex-direction: column; border: 1px solid #e2e8f0;
-            max-height: 300px; /* スクロール制限 */
-        }
-        .log-entry { margin-bottom: 6px; font-size: 12px; padding-bottom: 6px; border-bottom: 1px solid #edf2f7; }
-        .chat-input-area { margin-top: auto; padding-top: 8px; border-top: 2px solid #e2e8f0; }
-        .canned-btn { padding: 6px 10px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 15px; font-size: 11px; cursor: pointer; white-space: nowrap; margin-right: 5px; }
-        
-        .summary-wrapper { flex-shrink: 0; height: 150px; display: flex; flex-direction: column; background:white; border:2px solid #cbd5e0; border-radius:8px; margin-bottom: 20px; } /* 下部に余白 */
-        .summary-header { background: #4a5568; color:white; padding:6px 10px; font-size:12px; font-weight:bold; display: flex; justify-content: space-between; align-items: center; }
-        .summary-content { flex: 1; padding:8px; overflow-y:auto; font-family: monospace; font-size:11px; line-height:1.4; border:none; width:100%; resize:none; outline:none; white-space: pre-wrap; }
-
-        .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 5px solid #cbd5e0; }
-        .box-card.active-box { border-left-color: #3182ce; background: #ebf8ff; border-color: #3182ce; } 
-        .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; font-size: 14px; color:#4a5568; }
-        .item-row { display: grid; grid-template-columns: 110px 60px 1fr; gap: 5px; align-items: center; padding: 6px 0; border-bottom: 1px solid #edf2f7; background: white; font-size: 13px; }
-        .status-badge-item { font-size: 10px; padding: 2px 4px; border-radius: 4px; text-align: center; font-weight: bold; white-space: nowrap; }
-        .st-pending { background: #edf2f7; color: #718096; }
+        /* Status Colors */
         .st-preparing { background: #feebc8; color: #c05621; }
-        .st-shipped { background: #bee3f8; color: #4299e1; }
-        .st-arrived { background: #c6f6d5; color: #2f855a; } 
-        .st-infusing { background: #2b6cb0; color: white; animation: pulseBlue 1.5s infinite; }
-        .st-completed { background: #2f855a; color: white; }
+        .st-shipped { background: #bee3f8; color: #2b6cb0; }
+        .st-arrived { background: #c6f6d5; color: #2f855a; }
+        .st-infusing { background: #2b6cb0; color: white; animation: pulse 1.5s infinite; }
+        .st-completed { background: #2d3748; color: white; }
 
-        .btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 40px; }
-        .btn-sm { padding: 4px 8px; font-size: 11px; min-height: 30px; }
-        .btn-primary { background: #3182ce; }
-        .btn-danger { background: #e53e3e; }
-        .btn-success { background: #38a169; }
-        .btn-warning { background: #dd6b20; }
-        .btn-secondary { background: #718096; }
+        /* Utils */
+        .btn { padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; font-size: 12px; color: white; cursor: pointer; }
+        .btn-sm { padding: 4px 8px; font-size: 10px; }
+        .btn-primary { background: #3182ce; } .btn-danger { background: #e53e3e; }
+        .btn-success { background: #38a169; } .btn-warn { background: #dd6b20; }
+        .btn-outline { background: transparent; border: 1px solid #cbd5e0; color: #4a5568; }
 
-        .scene-stock-display { position: absolute; top: 60px; right: 10px; background: #2f855a; color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 12px; z-index: 100; border: 2px solid white; }
-
-        /* モーダル */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
-        .modal.active { display: flex; }
-        .modal-card { background: white; padding: 20px; border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; text-align: center; }
-        .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; } /* スマホは2列 */
-        @media (min-width: 600px) { .role-grid { grid-template-columns: repeat(4, 1fr); } }
-
-        .role-select-btn { padding: 15px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; color: #4a5568; height: 100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-height: 80px; }
-        .role-icon { font-size: 20px; margin-bottom: 2px; }
+        /* Log & Chat */
+        .log-container { display: flex; flex-direction: column; gap: 6px; padding-bottom: 60px; }
+        .log-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid #eee; }
+        .log-time { color: #a0aec0; font-size: 10px; margin-right: 4px; }
         
-        .session-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; text-align: left; }
-        .session-item { padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #f7fafc; }
+        #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 480px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .role-btn { 
+            border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; 
+            font-size: 12px; font-weight: bold; color: #4a5568; display: flex; flex-direction: column; gap: 4px; 
+        }
+        .role-btn:active { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; }
 
-        .blood-popup { display: none; position: fixed; inset: 0; background: rgba(229, 62, 62, 0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; color: white; animation: fadeIn 0.3s; pointer-events: none; }
-        .blood-popup h1 { font-size: 24px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid white; padding-bottom: 5px;}
+        /* Blood Big Display (Static) */
+        .blood-big { background: #e53e3e; color: white; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .blood-big.show { display: block; animation: fadeIn 0.5s; }
+
+        /* FULL SCREEN POPUP */
+        .blood-popup { display: none; position: fixed; inset: 0; background: rgba(229, 62, 62, 0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; color: white; animation: flashIn 0.3s; pointer-events: none; }
+        .blood-popup h1 { font-size: 24px; margin-bottom: 10px; letter-spacing: 2px; border-bottom: 2px solid white; padding-bottom: 5px; }
         .blood-popup div { font-size: 60px; font-weight: 800; text-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .blood-popup.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .hidden { display: none !important; }
-        
-        #cloudStatus { position: fixed; bottom: 5px; right: 5px; font-size: 10px; color: #cbd5e0; z-index: 50; }
-        .cloud-online { color: #48bb78 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flashIn { 0% { opacity: 0; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
+
+    <div id="pickerModal">
+        <div class="picker-sheet">
+            <div class="picker-toolbar">
+                <div class="picker-title" id="pickerTitle">RBC (A型)</div>
+                <button class="btn btn-primary" onclick="confirmPicker()">完了</button>
+            </div>
+            <div class="picker-wheel-container">
+                <div class="picker-highlight"></div>
+                <div class="picker-wheel" id="pickerWheel">
+                    </div>
+            </div>
+        </div>
+    </div>
 
     <div id="bloodPopup" class="blood-popup">
         <h1>🩸 血液型確定 🩸</h1>
@@ -230,181 +248,198 @@
 
     <div id="loginModal" class="modal active">
         <div class="modal-card">
+            <h2 style="text-align:center; font-size:18px; margin-bottom:5px;">MTP Cloud</h2>
+            <p style="text-align:center; font-size:11px; color:#718096;">役割を選択してください</p>
+            
             <div id="stepRole">
-                <h2>役割を選択</h2>
                 <div class="role-grid">
-                    <button class="role-select-btn" onclick="selectRole('輸血管理部')"><span class="role-icon">🏥</span>輸血部<br><span style="font-size:10px;">在庫管理</span></button>
-                    <button class="role-select-btn" onclick="selectRole('チームリーダー')"><span class="role-icon">👨‍⚕️</span>リーダー</button>
-                    <button class="role-select-btn" onclick="selectRole('手技医師')"><span class="role-icon">💉</span>手技医師</button>
-                    <button class="role-select-btn" onclick="selectRole('輸血管理責任者')"><span class="role-icon">📋</span>責任者</button>
-                    <button class="role-select-btn" onclick="selectRole('記録Ns')"><span class="role-icon">📝</span>記録Ns</button>
-                    <button class="role-select-btn" onclick="selectRole('介助Ns')"><span class="role-icon">💊</span>介助Ns</button>
-                    <button class="role-select-btn" onclick="selectRole('MTP搬送者')"><span class="role-icon">🏃</span>搬送者</button>
-                    <button class="role-select-btn" onclick="selectRole('臨床工学技師')"><span class="role-icon">⚙️</span>ME</button>
+                    <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
+                    <div class="role-btn" onclick="selectRole('チームリーダー')"><span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span></div>
+                    <div class="role-btn" onclick="selectRole('手技医師')"><span style="font-size:20px;">💉</span>手技医師</div>
+                    <div class="role-btn" onclick="selectRole('輸血責任者')"><span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span></div>
+                    <div class="role-btn" onclick="selectRole('記録Ns')"><span style="font-size:20px;">📝</span>記録Ns</div>
+                    <div class="role-btn" onclick="selectRole('介助Ns')"><span style="font-size:20px;">💊</span>介助Ns</div>
+                    <div class="role-btn" onclick="selectRole('MTP搬送者')"><span style="font-size:20px;">🏃</span>MTP搬送者</div>
+                    <div class="role-btn" onclick="selectRole('臨床工学技師')"><span style="font-size:20px;">⚙️</span>臨床工学技師</div>
                 </div>
             </div>
+
             <div id="stepSession" class="hidden">
-                <h2 id="sessionSelectTitle">症例選択 (Cloud)</h2>
-                <div id="bloodDeptDashboard" class="hidden" style="margin-bottom:15px; background:#ebf8ff; padding:10px; border-radius:8px; border:1px solid #bee3f8;">
-                    <h3 style="color:#2c5282; margin-bottom:5px; font-size:14px;">📦 院内在庫マスター入力</h3>
-                    <p style="font-size:11px; color:#4a5568; margin-bottom:5px;">※全端末に即時同期されます。</p>
-                    <div id="masterStockArea" style="overflow-x: auto;"></div>
+                <h3 id="sessionTitle" class="section-title" style="margin-top:0;">進行中の症例</h3>
+                
+                <div id="adminStockPanel" class="hidden" style="background:#f0f9ff; padding:10px; border-radius:8px; border:1px solid #bee3f8; margin-bottom:15px;">
+                    <div style="font-weight:bold; color:#2b6cb0; font-size:12px; margin-bottom:5px;">📦 院内在庫マスター (即時反映)</div>
+                    <div id="masterStockTableWrapper" style="overflow-x:auto;"></div>
                 </div>
-                <div id="activeSessionsList" class="session-list">
-                    <p>読み込み中...</p>
-                </div>
-                <div id="newSessionControls" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e0;">
-                    <h3>または新規MTP発動</h3>
-                    <div style="display:flex; gap:5px; justify-content:center; margin-top:10px; flex-wrap: wrap;">
-                        <input type="text" id="newPid" placeholder="ID" style="padding:10px; font-size:16px; border:1px solid #cbd5e0; border-radius:4px; width:100px;">
-                        <input type="text" id="newLoc" placeholder="場所" style="padding:10px; font-size:16px; border:1px solid #cbd5e0; border-radius:4px; width:80px;">
-                        <button class="btn btn-danger" onclick="startNewSession()">🚨 発動</button>
+
+                <div id="sessionList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                
+                <div style="margin-top:20px; padding-top:15px; border-top:1px dashed #cbd5e0;">
+                    <div style="font-size:12px; font-weight:bold; margin-bottom:5px;">新規MTP発動</div>
+                    <div style="display:flex; gap:5px; align-items:center;">
+                        <input type="text" id="newPid" class="stock-input" placeholder="ID" style="border:1px solid #cbd5e0; border-radius:4px; flex:1; text-align:left; padding-left:10px; height:44px;">
+                        <select id="newLoc" style="border:1px solid #cbd5e0; border-radius:4px; width:100px; padding:5px; font-size:14px; background:white; height:44px;">
+                            <option value="ER">ER</option>
+                            <option value="OR">OR</option>
+                            <option value="ICU">ICU</option>
+                            <option value="救急病棟">救急病棟</option>
+
+                        </select>
+                        <button class="btn btn-danger" onclick="startNewSession()">発動</button>
                     </div>
                 </div>
-                <div style="margin-top:15px;">
-                    <button class="btn btn-secondary btn-sm" onclick="backToRole()">戻る</button>
-                </div>
+                <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="backToRole()">戻る</button>
             </div>
         </div>
     </div>
 
-    <div id="stockEditModal" class="modal">
-        <div class="modal-card">
-            <h2>📦 院内在庫の修正</h2>
-            <p style="margin-bottom:10px; font-size:12px;">入力すると自動保存されます。</p>
-            <div id="modalStockArea" style="overflow-x: auto;"></div>
-            <button class="btn btn-primary" style="margin-top:20px; width:100%;" onclick="closeStockEdit()">閉じる</button>
+    <header class="app-header">
+        <div class="header-row">
+            <div style="display:flex; align-items:baseline; gap:5px;">
+                <span style="font-size:16px; font-weight:bold;">ID: <span id="hdPid">---</span></span>
+                <span id="hdRole" class="role-pill">Guest</span>
+            </div>
+            <div id="hdStatus" class="status-badge st-standby">待機中</div>
         </div>
+        
+        <div class="stats-bar">
+            <div class="stat-group" style="border-right:1px solid #4a5568;">
+                <span class="stat-label">📍 現場在庫 (未投与)</span>
+                <div class="stat-vals">
+                    <span class="c-red">R<span id="sRBC">0</span></span>
+                    <span class="c-yel">F<span id="sFFP">0</span></span>
+                    <span class="c-blu">P<span id="sPC">0</span></span>
+                </div>
+            </div>
+            <div class="stat-group">
+                <span class="stat-label">💉 実施輸血量 (完了)</span>
+                <div class="stat-vals">
+                    <span class="c-red">R<span id="uRBC">0</span></span>
+                    <span class="c-yel">F<span id="uFFP">0</span></span>
+                    <span class="c-blu">P<span id="uPC">0</span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-viewport" id="mainViewport">
+        
+        <div id="tabInventory" class="tab-view">
+            <div class="section-title">
+                🏥 院内在庫マスター
+                <span id="stockModeLabel" style="font-size:10px; font-weight:normal; color:#718096;">閲覧のみ</span>
+            </div>
+            <div id="viewStockTableWrapper"></div>
+            <p style="font-size:10px; color:#718096; margin-top:5px;">※輸血検査部のみ編集可能。RBC/FFPは±2、PCは±10で増減。</p>
+        </div>
+
+        <div id="tabAction" class="tab-view active-view">
+            
+            <div id="bloodBig" class="blood-big">
+                <div style="font-size:10px; opacity:0.8;">BLOOD TYPE CONFIRMED</div>
+                <div id="bloodBigText" style="font-size:36px; font-weight:900;"></div>
+            </div>
+
+            <div id="panelDoctor">
+                <div class="section-title">⚡ オーダー</div>
+                <button class="mtp-btn mtp-btn-1" onclick="orderMTP(1)">
+                    <span class="mtp-head">① 異型適合血 オーダー</span>
+                    <span class="mtp-sub">BOX1: O型RBC(3) + AB型FFP(3)</span>
+                </button>
+                <button class="mtp-btn mtp-btn-2" onclick="orderMTP(2)">
+                    <span class="mtp-head">② 同型血 オーダー (要血型)</span>
+                    <span class="mtp-sub">BOX2(同型) + BOX3(PC含) を追加</span>
+                </button>
+
+                <div class="section-title">🚨 宣言・指示</div>
+                <div class="doc-grid">
+                    <div class="doc-btn" id="btnWarn" onclick="toggleFlag('warn', '異型輸血宣言', 'bg-warn')">⚠️ 異型輸血<br>宣言</div>
+                    <div class="doc-btn" id="btnBlood" onclick="toggleFlag('blood', '採血2回済', 'bg-blood')">💉 採血<br>2回済</div>
+                    <div class="doc-btn" style="border-color:#e53e3e; color:#e53e3e;" onclick="endMTP()">🏁 MTP<br>終了宣言</div>
+                </div>
+
+                <div class="section-title">💊 薬剤投与</div>
+                <div class="doc-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="doc-btn" id="btnFib" onclick="toggleMed('fib', 'フィブリノゲン')">フィブリノゲン</div>
+                    <div class="doc-btn" id="btnTrans" onclick="toggleMed('trans', 'トランサミン')">トランサミン</div>
+                    <div class="doc-btn" id="btnK2" onclick="toggleMed('k2', 'K2')">ケイツー</div>
+                    <div class="doc-btn" id="btnPrax" onclick="toggleMed('prax', 'プリズバインド')">プリズバインド</div>
+                    <div class="doc-btn" id="btnKcentra" onclick="toggleMed('kcentra', 'ケイセントラ')">ケイセントラ</div>
+                </div>
+            </div>
+
+            <div id="panelCE" class="hidden">
+                <div class="section-title">⚙️ MEアクション</div>
+                <div class="doc-btn" id="btnRapid" onclick="toggleFlag('rapid', 'Rapid Infuser', 'bg-ce')" style="width:100%; font-size:14px; height:50px;">⚡ ラピッドインヒューザー開始</div>
+            </div>
+
+            <div id="panelLab" class="hidden">
+                <div class="section-title">🩸 血液型確定</div>
+                <div class="doc-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="doc-btn" id="btnA" onclick="setBlood('A')">A</div>
+                    <div class="doc-btn" id="btnB" onclick="setBlood('B')">B</div>
+                    <div class="doc-btn" id="btnO" onclick="setBlood('O')">O</div>
+                    <div class="doc-btn" id="btnAB" onclick="setBlood('AB')">AB</div>
+                </div>
+                <div class="doc-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="doc-btn" id="btnRhP" onclick="setRh('+')">Rh(+)</div>
+                    <div class="doc-btn" id="btnRhM" onclick="setRh('-')">Rh(-)</div>
+                </div>
+                <div style="background:white; padding:8px; border:1px solid #cbd5e0; border-radius:6px; font-size:11px;">
+                    <strong>不規則抗体:</strong>
+                    <button class="btn btn-sm btn-success" id="btnIrregNeg" onclick="setIrreg('neg')">なし</button>
+                    <button class="btn btn-sm btn-danger" id="btnIrregPos" onclick="setIrreg('pos')">あり</button>
+                </div>
+            </div>
+
+            <div class="section-title">📦 輸血バッグ状況</div>
+            <div id="boxesContainer"></div>
+
+            <div style="height:40px;"></div>
+            <button class="btn btn-outline" style="width:100%; margin-bottom:20px;" onclick="moveToWard()">🏥 病棟入室 (完結)</button>
+        </div>
+
+        <div id="tabLog" class="tab-view">
+            <div class="section-title">💬 チャット・ログ</div>
+            <div id="logContainer" class="log-container"></div>
+        </div>
+
+        <div id="tabSummary" class="tab-view">
+            <div class="section-title">
+                📝 記録サマリー
+                <button class="btn btn-sm btn-primary" onclick="copySummary()">コピー</button>
+            </div>
+            <textarea id="summaryText" style="width:100%; height:300px; padding:10px; font-size:11px; font-family:monospace; border:1px solid #cbd5e0; border-radius:6px;" readonly></textarea>
+        </div>
+
     </div>
 
-    <div class="container">
-        <div class="header">
-            <h1>MTP Cloud <span style="font-size:10px; font-weight:normal; opacity:0.8;">v28.2</span></h1>
-            <div class="header-info">
-                <div id="statusBadge" class="status-badge status-standby">待機中</div>
-                <div id="patientBadge" class="patient-badge">ID: ---</div>
-                <div id="myRoleDisplay" class="role-badge">未ログイン</div>
-                <button class="btn btn-secondary btn-sm" onclick="location.reload()">退出</button>
-            </div>
+    <nav class="bottom-nav">
+        <div class="nav-item" onclick="changeTab('tabInventory', this)">
+            <span class="nav-icon">📊</span>在庫
         </div>
+        <div class="nav-item active" onclick="changeTab('tabAction', this)">
+            <span class="nav-icon">⚡</span>アクション
+        </div>
+        <div class="nav-item" onclick="changeTab('tabLog', this)">
+            <span class="nav-icon">💬</span>ログ
+        </div>
+        <div class="nav-item" onclick="changeTab('tabSummary', this)">
+            <span class="nav-icon">📝</span>サマリー
+        </div>
+    </nav>
 
-        <div class="main-content">
-            <div class="left-panel">
-                <div id="sceneStock" class="scene-stock-display hidden">
-                    📍 現場在庫: RBC <span id="sRBC">0</span> / FFP <span id="sFFP">0</span> / PC <span id="sPC">0</span>
-                </div>
-
-                <div style="background:#edf2f7; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #cbd5e0;">
-                    <label style="font-weight:bold; display:flex; justify-content:space-between; align-items:center; color:#2d3748; margin-bottom:5px; font-size:13px;">
-                        <span>🏥 院内在庫 (マスター同期)</span>
-                        <button id="btnEditStock" class="btn btn-primary btn-sm hidden" onclick="openStockEdit()">✏️ 修正</button>
-                    </label>
-                    <div id="viewStockArea" style="overflow-x:auto;"></div>
-                </div>
-
-                <div id="activeView" class="hidden">
-                    <div id="doctorPanel" class="hidden">
-                        <div class="section-title" style="color:#c53030;">👨‍⚕️ 医師指示・オーダー</div>
-                        <div class="mtp-order-group">
-                            <button class="mtp-btn mtp-btn-1" onclick="orderMTP(1)"><span>① MTPオーダー 1</span><small>BOX1 (O型RBC + AB型FFP)</small></button>
-                            <button class="mtp-btn mtp-btn-2" onclick="orderMTP(2)"><span>② MTPオーダー 2</span><small>BOX2(同型) + BOX3(PC含)</small></button>
-                        </div>
-                        <div class="doctor-controls">
-                            <button class="doc-btn" id="btnWarn" onclick="toggleDocBtn('warn', '異型輸血を宣言')">⚠️ 異型輸血<br>宣言</button>
-                            <button class="doc-btn" id="btnBlood" onclick="toggleDocBtn('blood', '血液型採血2回済み')">💉 採血<br>2回済</button>
-                            <button class="doc-btn" id="btnEnd" onclick="endMTP()">🏁 MTP<br>終了宣言</button>
-                            <button class="doc-btn" id="btnMove" onclick="moveToWard()">🏥 病棟入室<br>(完結)</button>
-                        </div>
-                        <div style="border-top:1px dashed #cbd5e0; padding-top:10px; margin-top:10px;">
-                            <div style="font-size:13px; font-weight:bold; color:#2c5282; margin-bottom:5px;">💊 薬剤投与指示</div>
-                            <div class="doctor-controls" style="grid-template-columns: repeat(3, 1fr);">
-                                <button class="doc-btn" id="btnFib" onclick="toggleMed('fib', 'フィブリノゲン')">フィブリノゲン</button>
-                                <button class="doc-btn" id="btnTrans" onclick="toggleMed('trans', 'トランサミン')">トランサミン</button>
-                                <button class="doc-btn" id="btnK2" onclick="toggleMed('k2', 'ケイツー')">ケイツー</button>
-                                <button class="doc-btn" id="btnPrax" onclick="toggleMed('prax', 'プリズバインド')">プリズバインド</button>
-                                <button class="doc-btn" id="btnKcentra" onclick="toggleMed('kcentra', 'ケイセントラ')">ケイセントラ</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="cePanel" class="hidden" style="margin-bottom:20px; border:2px solid #b7791f; border-radius:8px; padding:10px; background:white;">
-                        <div class="section-title" style="color:#b7791f;">⚙️ 臨床工学技師アクション</div>
-                        <button class="doc-btn" id="btnRapid" style="width:100%; font-size:16px; padding:15px; background:#feebc8; color:#744210;" onclick="toggleRapid()">⚡ ラピッドインヒューザー開始</button>
-                    </div>
-
-                    <div class="section">
-                        <div class="section-title">📦 輸血オーダー状況</div>
-                        <div id="boxesContainer"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="right-panel">
-                <div id="bloodBigDisplay" class="blood-type-big-display">
-                    <span class="blood-type-big-label">BLOOD TYPE CONFIRMED</span>
-                    <span id="bloodBigText" class="blood-type-big-text"></span>
-                </div>
-
-                <div class="lab-panel">
-                    <div class="section-title" style="font-size:14px; margin-bottom:10px;">🩸 血液型確定 (輸血部のみ)</div>
-                    <div class="lab-row">
-                        <button class="lab-btn" id="btnA" onclick="setBloodType('A')">A</button>
-                        <button class="lab-btn" id="btnB" onclick="setBloodType('B')">B</button>
-                        <button class="lab-btn" id="btnO" onclick="setBloodType('O')">O</button>
-                        <button class="lab-btn" id="btnAB" onclick="setBloodType('AB')">AB</button>
-                    </div>
-                    <div class="lab-row">
-                        <button class="lab-btn" id="btnRhP" onclick="setRh('+')">Rh(+)</button>
-                        <button class="lab-btn" id="btnRhM" onclick="setRh('-')">Rh(-)</button>
-                    </div>
-                    <div class="lab-row">
-                        <button class="lab-btn irreg-neg" id="btnIrregNeg" onclick="setIrreg('neg')">不規則抗体：なし</button>
-                        <button class="lab-btn irreg-pos" id="btnIrregPos" onclick="setIrreg('pos')">不規則抗体：あり</button>
-                    </div>
-                </div>
-
-                <div class="inventory-summary">
-                    <h3 style="margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.2); font-size:13px;">📊 この症例の投与済み累計</h3>
-                    <div class="inventory-grid">
-                        <div><div class="inv-val" id="sumRBC">0</div><div>RBC</div></div>
-                        <div><div class="inv-val" id="sumFFP">0</div><div>FFP</div></div>
-                        <div><div class="inv-val" id="sumPC">0</div><div>PC</div></div>
-                    </div>
-                </div>
-
-                <div class="log-wrapper">
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="showTab('chat')">💬 チャット</button>
-                        <button class="tab-btn" onclick="showTab('log')">📋 ログ</button>
-                    </div>
-                    <div id="tabChat" class="log-container">
-                        <div id="chatArea" style="flex:1; overflow-y:auto; margin-bottom:5px;"></div>
-                        <div class="chat-input-area">
-                            <div id="cannedButtons" style="display:flex; gap:5px; margin-bottom:5px; overflow-x:auto; padding-bottom:5px;"></div>
-                            <div style="display:flex; gap:5px;">
-                                <input type="text" id="chatInput" placeholder="メッセージ..." style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:16px;">
-                                <button class="btn btn-primary btn-sm" onclick="sendChat()">送信</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="tabLog" class="log-container hidden"></div>
-                </div>
-
-                <div class="summary-wrapper">
-                    <div class="summary-header">
-                        <span>📝 MTP記録サマリー</span>
-                        <button class="btn btn-primary btn-sm" onclick="copySummary()" style="padding:2px 8px; font-size:11px;">📋 コピー</button>
-                    </div>
-                    <textarea id="realtimeSummary" class="summary-content" readonly></textarea>
-                </div>
-            </div>
+    <div id="chatOverlay">
+        <div style="display:flex; gap:5px; overflow-x:auto; padding-bottom:5px; margin-bottom:5px;" id="cannedArea"></div>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="chatInput" placeholder="メッセージ..." style="flex:1; padding:8px; border:1px solid #cbd5e0; border-radius:4px;">
+            <button class="btn btn-primary btn-sm" onclick="sendChat()">送信</button>
         </div>
     </div>
-    <div id="cloudStatus">● Cloud</div>
 
     <script>
         // =================================================================
-        // Firebase設定 (ユーザー様のキーを適用済み)
+        // CONFIG
         // =================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyDdqljAVfjGzKWAA1oWsbnwIphifYMnr-E",
@@ -415,756 +450,539 @@
             appId: "1:48202967020:web:626950d14dfb088200c2c9",
             measurementId: "G-QPM4YE65VH"
         };
-        // =================================================================
-
-        // Firebase初期化
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // アプリの状態
+        // =================================================================
+        // STATE
+        // =================================================================
         let myRole = "";
-        let currentSessionId = null; 
-        let currentSessionData = null; // 現在のセッションのデータ保持用
-        let lastBloodState = ""; 
-        let unsubscribeSession = null;
+        let currentSessionId = null;
+        let currentSessionData = null;
+        let hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}}; // Def: 6 and 10
+        let lastBloodState = "";
         let unsubscribeInventory = null;
-        
-        // 院内在庫(Inventory)は別コレクション "master/inventory" で管理
-        let hospitalStock = {RBC:{A:0,B:0,O:0,AB:0},FFP:{A:0,B:0,O:0,AB:0},PC:{A:0,B:0,O:0,AB:0}};
+        let unsubscribeSession = null;
+
+        // Picker State
+        let pickerTarget = null; // {prod, type}
+        let pickerValue = 0;
 
         const ROLES = {
-            DOCTOR: ['チームリーダー', '手技医師', '輸血管理責任者'],
+            ADMIN: ['輸血検査部'],
+            LEADER: ['チームリーダー'],
+            DOCTOR: ['チームリーダー', '手技医師', '輸血責任者'],
             NURSE: ['記録Ns', '介助Ns'],
-            BLOOD: ['輸血管理部'],
+            CE: ['臨床工学技師'],
             TRANS: ['MTP搬送者', '臨床工学技師']
         };
 
-        const CANNED_MESSAGES = {
-            DOCTOR: ['開腹術開始', '開胸術開始', '開頭術開始', 'IVR開始', 'バイタル不安定', 'ブラッドアクセス挿入', '気管挿管実施', 'REBOA挿入'],
-            BLOOD: ['異型で出します', '同型未クロスです', '以後クロスマッチ済みです', '在庫確認中'],
-            NURSE: ['異型輸血宣言確認', '血型2回提出済', 'CT出発', 'アンギオ出発', '緊急手術開始', '到着しました', '投与開始します'],
-            TRANS: ['到着しました', '投与開始します', '次のオーダーお願いします', '了解しました']
+        const CANNED = {
+            DOCTOR: ['開腹開始',  'IVR開始',  '開胸開始',  '開頭術開始',  'REBOA挿入',  '止血完了'],
+            ADMIN: ['異型対応',  '同型未クロス',   '以後クロスマッチ済み',   '在庫取り寄せ要',   '出庫完了'],
+            NURSE: ['到着', '投与開始', '急速輸血中', '血型提出済'],
+            TRANS: ['到着', '次のオーダー依頼', '了解']
         };
 
-        function getCannedMessages() {
-            if(ROLES.DOCTOR.includes(myRole)) return CANNED_MESSAGES.DOCTOR;
-            if(ROLES.BLOOD.includes(myRole)) return CANNED_MESSAGES.BLOOD;
-            if(ROLES.NURSE.includes(myRole)) return CANNED_MESSAGES.NURSE;
-            if(ROLES.TRANS.includes(myRole)) return CANNED_MESSAGES.TRANS;
-            return ['了解しました'];
-        }
-
-        function renderCannedButtons() {
-            const container = document.getElementById('cannedButtons');
-            const messages = getCannedMessages();
-            container.innerHTML = messages.map(msg => 
-                `<button class="canned-btn" onclick="postChat('${msg}')">${msg}</button>`
-            ).join('');
-        }
-
-        // --- Firestore 接続状況 ---
-        const cloudStatus = document.getElementById('cloudStatus');
-        if(cloudStatus) cloudStatus.classList.add('cloud-online');
-
-        // --- ロール選択 ---
+        // =================================================================
+        // UI & NAVIGATION
+        // =================================================================
         function selectRole(role) {
             myRole = role;
-            document.getElementById("myRoleDisplay").textContent = role;
-            document.getElementById("stepRole").classList.add("hidden");
-            document.getElementById("stepSession").classList.remove("hidden");
+            document.getElementById('hdRole').textContent = role;
+            document.getElementById('stepRole').classList.add('hidden');
+            document.getElementById('stepSession').classList.remove('hidden');
 
-            // 在庫マスターのリアルタイム同期を開始
+            const isAdmin = ROLES.ADMIN.includes(role);
+            
+            if(isAdmin) {
+                document.getElementById('adminStockPanel').classList.remove('hidden');
+                document.getElementById('sessionTitle').textContent = "在庫管理 / 症例選択";
+                renderStockTable('masterStockTableWrapper', true);
+            } else {
+                document.getElementById('adminStockPanel').classList.add('hidden');
+                document.getElementById('sessionTitle').textContent = "進行中の症例";
+            }
+
+            document.getElementById('stockModeLabel').textContent = isAdmin ? "編集可能" : "閲覧のみ";
+            renderStockTable('viewStockTableWrapper', isAdmin);
+
             startInventorySync();
-
-            // 在庫テーブル初期描画
-            if(!document.getElementById("master_RBC_A")) {
-                document.getElementById("masterStockArea").innerHTML = generateStockTableHTML("master", true);
-                document.getElementById("viewStockArea").innerHTML = generateStockTableHTML("view", false); 
-                document.getElementById("modalStockArea").innerHTML = generateStockTableHTML("modal", true);
-            }
-
-            // セッション一覧の読み込み開始
             loadActiveSessions();
-
-            if(role === '輸血管理部') {
-                document.getElementById("bloodDeptDashboard").classList.remove("hidden");
-                document.getElementById("sessionSelectTitle").textContent = "在庫管理または症例参加";
-            }
         }
 
         function backToRole() {
-            document.getElementById("stepSession").classList.add("hidden");
-            document.getElementById("bloodDeptDashboard").classList.add("hidden");
-            document.getElementById("stepRole").classList.remove("hidden");
+            document.getElementById('stepRole').classList.remove('hidden');
+            document.getElementById('stepSession').classList.add('hidden');
             if(unsubscribeInventory) unsubscribeInventory();
         }
 
-        // --- Inventory Sync (院内在庫) ---
+        function changeTab(tabId, navEl) {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
+            document.getElementById(tabId).classList.add('active-view');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(navEl) navEl.classList.add('active');
+            
+            const overlay = document.getElementById('chatOverlay');
+            if(tabId === 'tabLog') {
+                overlay.style.display = 'block';
+                renderCanned();
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        let touchStartX = 0;
+        const viewport = document.getElementById('mainViewport');
+        viewport.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        viewport.addEventListener('touchend', e => {
+            const touchEndX = e.changedTouches[0].screenX;
+            if (touchEndX < touchStartX - 50) nextTab();
+            if (touchEndX > touchStartX + 50) prevTab();
+        });
+
+        function nextTab() {
+            const current = document.querySelector('.nav-item.active');
+            if(current && current.nextElementSibling) current.nextElementSibling.click();
+        }
+        function prevTab() {
+            const current = document.querySelector('.nav-item.active');
+            if(current && current.previousElementSibling) current.previousElementSibling.click();
+        }
+
+        // =================================================================
+        // INVENTORY LOGIC (DRUM PICKER)
+        // =================================================================
+        function renderStockTable(wrapperId, editable) {
+            const el = document.getElementById(wrapperId);
+            if(!el) return;
+            let html = `<table class="stock-table"><thead><tr><th></th><th>A</th><th>B</th><th>O</th><th>AB</th></tr></thead><tbody>`;
+            ['RBC','FFP','PC'].forEach(prod => {
+                html += `<tr><td style="font-weight:bold; background:#edf2f7; text-align:center;">${prod}</td>`;
+                ['A','B','O','AB'].forEach(type => {
+                    const id = `inv_${wrapperId}_${prod}_${type}`;
+                    const cls = editable ? 'stock-display-btn editable' : 'stock-display-btn';
+                    const clickFn = editable ? `onclick="openPicker('${prod}','${type}')"` : '';
+                    html += `<td><div id="${id}" class="${cls}" ${clickFn}>-</div></td>`;
+                });
+                html += `</tr>`;
+            });
+            html += `</tbody></table>`;
+            el.innerHTML = html;
+        }
+
         function startInventorySync() {
-            unsubscribeInventory = db.collection("master").doc("inventory").onSnapshot((doc) => {
+            unsubscribeInventory = db.collection("master").doc("inventory").onSnapshot(doc => {
                 if(doc.exists) {
                     hospitalStock = doc.data();
                 } else {
-                    // 初期化
+                    hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}};
                     db.collection("master").doc("inventory").set(hospitalStock);
                 }
-                renderStock();
+                updateAllStockDisplays();
             });
         }
 
-        function renderStock() {
-            ['master','view','modal'].forEach(prefix => {
-                if(document.getElementById(`${prefix}_RBC_A`)) {
-                    ['RBC','FFP','PC'].forEach(prod => {
-                        ['A','B','O','AB'].forEach(type => {
-                            const el = document.getElementById(`${prefix}_${prod}_${type}`);
-                            const val = (hospitalStock[prod] && hospitalStock[prod][type] !== undefined) ? hospitalStock[prod][type] : 0;
-                            if(el && document.activeElement !== el) el.value = val;
+        function updateAllStockDisplays() {
+            ['masterStockTableWrapper', 'viewStockTableWrapper'].forEach(wId => {
+                if(document.getElementById(wId)) {
+                    ['RBC','FFP','PC'].forEach(p => {
+                        ['A','B','O','AB'].forEach(t => {
+                            const el = document.getElementById(`inv_${wId}_${p}_${t}`);
+                            if(el) {
+                                const val = (hospitalStock[p] && hospitalStock[p][t] !== undefined) ? hospitalStock[p][t] : (p==='PC'?10:6);
+                                el.textContent = val;
+                            }
                         });
                     });
                 }
             });
         }
 
-        // 在庫入力イベントハンドラ
-        function onStockInput(el) {
-            const parts = el.id.split('_'); 
-            const prod = parts[1];
-            const type = parts[2];
-            const val = parseInt(el.value);
+        // Picker Logic
+        function openPicker(prod, type) {
+            pickerTarget = {prod, type};
+            const currentVal = (hospitalStock[prod] && hospitalStock[prod][type] !== undefined) ? hospitalStock[prod][type] : (prod==='PC'?10:6);
             
-            // ローカル反映
-            if(!hospitalStock[prod]) hospitalStock[prod] = {};
-            hospitalStock[prod][type] = isNaN(val) ? 0 : val;
-        }
-
-        function onStockChange(el) {
-            // Firestoreへ保存
-            db.collection("master").doc("inventory").set(hospitalStock)
-                .then(() => console.log("Inventory Saved"));
-        }
-
-        function onStockFocus() { /* 編集中のフラグ制御はFirestore同期では不要だがUI挙動のため残す */ }
-        function onStockKeyDown(e, el) {
-            if(e.key === 'Enter') {
-                e.preventDefault();
-                el.blur(); 
-                const parts = el.id.split('_'); 
-                const prefix = parts[0];
-                const prod = parts[1];
-                const type = parts[2];
-                const products = ['RBC', 'FFP', 'PC'];
-                const types = ['A', 'B', 'O', 'AB'];
-                let pIdx = products.indexOf(prod);
-                let tIdx = types.indexOf(type);
-                tIdx++;
-                if(tIdx >= types.length) { tIdx = 0; pIdx++; }
-                if(pIdx < products.length) {
-                    const nextId = `${prefix}_${products[pIdx]}_${types[tIdx]}`;
-                    const nextEl = document.getElementById(nextId);
-                    if(nextEl) { nextEl.focus(); nextEl.select(); }
-                }
+            document.getElementById('pickerTitle').textContent = `${prod} (${type}型) 数量変更`;
+            
+            const wheel = document.getElementById('pickerWheel');
+            let html = "";
+            const step = (prod === 'PC') ? 10 : 2;
+            const max = (prod === 'PC') ? 200 : 100;
+            
+            for(let i=0; i<=max; i+=step) {
+                html += `<div class="picker-item" data-val="${i}">${i}</div>`;
             }
+            wheel.innerHTML = html;
+            
+            document.getElementById('pickerModal').classList.add('show');
+            
+            setTimeout(() => {
+                const targetIndex = currentVal / step;
+                wheel.scrollTop = targetIndex * 40;
+            }, 10);
         }
 
-        // --- Sessions Management ---
+        function confirmPicker() {
+            if(!pickerTarget) return;
+            const wheel = document.getElementById('pickerWheel');
+            const index = Math.round(wheel.scrollTop / 40);
+            const step = (pickerTarget.prod === 'PC') ? 10 : 2;
+            const newVal = index * step;
+            
+            db.collection("master").doc("inventory").update({
+                [`${pickerTarget.prod}.${pickerTarget.type}`]: newVal
+            });
+            closePicker();
+        }
+
+        function closePicker() {
+            document.getElementById('pickerModal').classList.remove('show');
+            pickerTarget = null;
+        }
+
+        // =================================================================
+        // SESSION LOGIC
+        // =================================================================
         function loadActiveSessions() {
-            const sessionListEl = document.getElementById("activeSessionsList");
-            db.collection("mtp_sessions")
-              .where("status", "!=", "completed")
-              .onSnapshot((snapshot) => {
-                  if(snapshot.empty) {
-                      sessionListEl.innerHTML = "<p style='color:#718096; text-align:center;'>進行中のMTPはありません</p>";
-                      return;
-                  }
-                  sessionListEl.innerHTML = snapshot.docs.map(doc => {
-                      const s = doc.data();
-                      const statusText = s.status === 'ended' ? ' [終了]' : '';
-                      const statusColor = s.status === 'ended' ? '#2f855a' : '#3182ce';
-                      return `
-                        <div class="session-item" onclick="joinSession('${s.id}')">
-                            <div><div style="font-weight:bold; font-size:16px;">🆔 ${s.id}${statusText}</div><div style="font-size:12px; color:#718096;">📍 ${s.location} / 開始: ${s.start_time}</div></div>
-                            <button class="btn btn-sm" style="background:${statusColor};">参加</button>
+            const list = document.getElementById('sessionList');
+            db.collection("mtp_sessions").where("status", "!=", "completed").onSnapshot(snap => {
+                if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:20px; color:#a0aec0;'>なし</div>"; return; }
+                list.innerHTML = snap.docs.map(doc => {
+                    const d = doc.data();
+                    const delBtn = ROLES.LEADER.includes(myRole) ? `<button class="btn btn-sm btn-outline" style="color:#e53e3e; border-color:#e53e3e;" onclick="deleteSession('${doc.id}', event)">削除</button>` : '';
+                    return `
+                    <div class="session-item" style="background:#fff; border:1px solid #cbd5e0; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="joinSession('${doc.id}')">
+                        <div>
+                            <div style="font-weight:bold; font-size:16px;">${d.id}</div>
+                            <div style="font-size:11px; color:#718096;">${d.location} (${d.start_time})</div>
                         </div>
-                    `;
-                  }).join("");
-              });
+                        <div style="display:flex; gap:5px;">${delBtn}<button class="btn btn-sm btn-primary">参加</button></div>
+                    </div>`;
+                }).join("");
+            });
         }
 
         function startNewSession() {
-            const pid = document.getElementById("newPid").value.trim();
-            const loc = document.getElementById("newLoc").value.trim();
+            const pid = document.getElementById('newPid').value.trim();
+            const loc = document.getElementById('newLoc').value;
             if(!pid) return alert("IDを入力してください");
-
-            const docRef = db.collection("mtp_sessions").doc(pid);
-            docRef.get().then(doc => {
-                if(doc.exists && (doc.data().status === 'active' || doc.data().status === 'ended')) {
-                    alert("既に同じIDのMTPが存在します");
-                    return;
-                }
-                const newS = {
-                    id: pid, location: loc, status: "active",
-                    start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
-                    boxes: [], 
-                    logs: [{t:getTime(), r:myRole, m:`🚨 MTP発動 患者ID:${pid} 場所:${loc}`}], 
-                    chats: [], 
-                    used: {RBC:0,FFP:0,PC:0},
-                    blood_res: {abo:"",rh:"",irreg_type:""}, 
-                    doc_flags:{warn:false,blood:false},
-                    medications: {fib:false, trans:false, k2:false, prax:false, kcentra:false},
-                    rapid_infuser: false
-                };
-                docRef.set(newS).then(() => joinSession(pid));
-            });
+            db.collection("mtp_sessions").doc(pid).set({
+                id: pid, location: loc, status: 'active',
+                start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
+                boxes: [], logs: [], chats: [],
+                used: {RBC:0, FFP:0, PC:0},
+                blood_res: {abo:'', rh:'', irreg:'neg'},
+                flags: {}, meds: {}
+            }).then(() => joinSession(pid));
         }
 
-        function joinSession(pid) {
-            currentSessionId = pid;
-            document.getElementById("loginModal").classList.remove("active");
+        function deleteSession(id, e) {
+            e.stopPropagation();
+            if(confirm("本当に削除しますか？復元できません。")) db.collection("mtp_sessions").doc(id).delete();
+        }
+
+        function joinSession(id) {
+            currentSessionId = id;
+            document.getElementById('hdPid').textContent = id;
+            document.getElementById('loginModal').classList.remove('active');
             
-            // ログ追加
-            addLog("ログイン");
-
-            // リアルタイム同期開始
-            unsubscribeSession = db.collection("mtp_sessions").doc(pid).onSnapshot(doc => {
-                if(!doc.exists) { alert("症例が見つかりません"); location.reload(); return; }
-                currentSessionData = doc.data();
-                renderSession(currentSessionData);
-            });
-        }
-
-        // --- Rendering Logic (前回消失していた部分を復元) ---
-        function renderSession(session) {
-            if(!session) return;
-
-            // 1. 血液型表示
-            const confirmed = (session.blood_res.abo && session.blood_res.rh);
-            const currentBloodState = `${session.blood_res.abo}_${session.blood_res.rh}`;
-            if (confirmed) {
-                const bigDisp = document.getElementById('bloodBigDisplay');
-                document.getElementById('bloodBigText').textContent = `${session.blood_res.abo}型 Rh(${session.blood_res.rh})`;
-                bigDisp.classList.add('active');
-                if (currentBloodState !== lastBloodState) {
-                    if(lastBloodState !== "") showBloodPopup(session.blood_res.abo, session.blood_res.rh);
-                    lastBloodState = currentBloodState;
-                }
-            } else {
-                document.getElementById('bloodBigDisplay').classList.remove('active');
-            }
-            if(lastBloodState === "") lastBloodState = currentBloodState;
-
-            // 2. パネル表示切り替え
-            document.getElementById("activeView").classList.remove("hidden");
-            document.getElementById("patientBadge").style.display = "block";
-            document.getElementById("patientBadge").textContent = `ID: ${session.id}`;
-
-            const badge = document.getElementById("statusBadge");
-            if(session.status === 'active') {
-                badge.textContent = "MTP発動中";
-                badge.className = "status-badge status-active";
-                document.getElementById("sceneStock").classList.remove("hidden");
-            } else if(session.status === 'ended') {
-                badge.textContent = "MTP終了";
-                badge.className = "status-badge status-ended";
-                document.getElementById("sceneStock").classList.remove("hidden");
-            }
-
             const isDoc = ROLES.DOCTOR.includes(myRole);
-            const isBlood = ROLES.BLOOD.includes(myRole);
-            const isCE = (myRole === '臨床工学技師');
+            const isCE = ROLES.CE.includes(myRole);
+            const isAdmin = ROLES.ADMIN.includes(myRole);
 
-            document.getElementById("doctorPanel").className = (isDoc && session.status === 'active') ? "" : "hidden";
-            if(isBlood) document.getElementById("btnEditStock").classList.remove("hidden");
-            if(isCE && session.status === 'active') document.getElementById("cePanel").classList.remove("hidden");
-            else document.getElementById("cePanel").classList.add("hidden");
+            if(!isDoc) document.getElementById('panelDoctor').classList.add('hidden');
+            if(isCE) document.getElementById('panelCE').classList.remove('hidden');
+            if(isAdmin) document.getElementById('panelLab').classList.remove('hidden');
 
-            // 3. フラグボタンの状態
-            const flags = session.doc_flags || {warn:false, blood:false};
-            const med = session.medications || {fib:false, trans:false, k2:false, prax:false, kcentra:false};
-            if(document.getElementById("btnWarn")) document.getElementById("btnWarn").className = flags.warn ? "doc-btn active-warn" : "doc-btn";
-            if(document.getElementById("btnBlood")) document.getElementById("btnBlood").className = flags.blood ? "doc-btn active-purple" : "doc-btn";
-            ['fib','trans','k2','prax','kcentra'].forEach(k => {
-                const btn = document.getElementById('btn'+k.charAt(0).toUpperCase() + k.slice(1));
-                if(btn) btn.className = med[k] ? "doc-btn active-med" : "doc-btn";
+            unsubscribeSession = db.collection("mtp_sessions").doc(id).onSnapshot(doc => {
+                if(!doc.exists) { alert("症例が終了/削除されました"); location.reload(); return; }
+                currentSessionData = doc.data();
+                renderScreen(currentSessionData);
             });
-            const btnRapid = document.getElementById("btnRapid");
-            if(btnRapid) {
-                btnRapid.className = session.rapid_infuser ? "doc-btn active-rapid" : "doc-btn";
-                btnRapid.textContent = session.rapid_infuser ? "⚡ ラピッドインヒューザー使用中" : "⚡ ラピッドインヒューザー開始";
-            }
-
-            // 4. サブレンダリング実行
-            calcSceneStock(session);
-            renderBoxes(session);
-            renderLab(session, isBlood);
-            renderLogs(session);
-            renderCannedButtons();
-            updateSummary(session);
         }
 
-        function calcSceneStock(session) {
-            let sRBC=0, sFFP=0, sPC=0;
-            session.boxes.forEach(box => {
-                box.items.forEach(i => {
+        // =================================================================
+        // RENDERING & ACTIONS
+        // =================================================================
+        function renderScreen(data) {
+            const sb = document.getElementById('hdStatus');
+            sb.className = `status-badge st-${data.status}`;
+            sb.textContent = data.status==='active' ? '発動中' : '終了';
+            
+            document.getElementById('uRBC').textContent = data.used.RBC;
+            document.getElementById('uFFP').textContent = data.used.FFP;
+            document.getElementById('uPC').textContent = data.used.PC;
+
+            let s = {RBC:0, FFP:0, PC:0};
+            data.boxes.forEach(b => {
+                b.items.forEach(i => {
                     if(i.status === 'arrived') {
-                        if(i.type.includes('RBC')) sRBC += i.units;
-                        else if(i.type.includes('FFP')) sFFP += i.units;
-                        else if(i.type.includes('PC')) sPC += i.units;
+                        if(i.type.includes('RBC')) s.RBC += i.units;
+                        else if(i.type.includes('FFP')) s.FFP += i.units;
+                        else if(i.type.includes('PC')) s.PC += i.units;
                     }
                 });
             });
-            document.getElementById("sRBC").textContent = sRBC;
-            document.getElementById("sFFP").textContent = sFFP;
-            document.getElementById("sPC").textContent = sPC;
-            document.getElementById("sumRBC").textContent = session.used ? session.used.RBC : 0;
-            document.getElementById("sumFFP").textContent = session.used ? session.used.FFP : 0;
-            document.getElementById("sumPC").textContent = session.used ? session.used.PC : 0;
-        }
+            document.getElementById('sRBC').textContent = s.RBC;
+            document.getElementById('sFFP').textContent = s.FFP;
+            document.getElementById('sPC').textContent = s.PC;
 
-        // --- Actions (Firestoreへの書き込み) ---
-
-        function orderMTP(type) {
-            if(!currentSessionId) return;
-            const s = currentSessionData;
-            
-            if(type===2 && (!s.blood_res.abo || !s.blood_res.rh)) {
-                alert("血液型が確定していません");
-                return;
+            // Blood Popup Logic
+            const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
+            if(lastBloodState !== "" && lastBloodState !== currentBlood && data.blood_res.abo) {
+                document.getElementById('bloodPopupText').textContent = currentBlood;
+                const pop = document.getElementById('bloodPopup');
+                pop.classList.remove('active');
+                void pop.offsetWidth; // trigger reflow
+                pop.classList.add('active');
+                setTimeout(()=>pop.classList.remove('active'), 3000);
             }
-            
-            const tid = Date.now();
-            let newBoxes = [];
-            let bName = "";
-            let logMsg = "";
-            let chatMsg = "";
-            
-            if(type===1) {
-                bName = "BOX1 (異型)";
-                const items = [
-                    {type:'O_RBC',units:2, realType:'O'}, {type:'O_RBC',units:2, realType:'O'}, {type:'O_RBC',units:2, realType:'O'},
-                    {type:'AB_FFP',units:2, realType:'AB'}, {type:'AB_FFP',units:2, realType:'AB'}, {type:'AB_FFP',units:2, realType:'AB'}
-                ];
-                newBoxes.push({name:bName, items: items.map((i,idx)=>({...i, id:`${tid}-1-${idx}`, status:'pending'}))});
-                logMsg = "📦 MTPオーダー① BOX1(異型) 発注";
-                chatMsg = "📦 オーダー① (BOX1) 指示";
-            } else {
-                const abo = s.blood_res.abo; 
-                let items = [
-                    {type:'RBC',units:2, realType:abo}, {type:'RBC',units:2, realType:abo},
-                    {type:'FFP',units:2, realType:abo}, {type:'FFP',units:2, realType:abo}
-                ];
-                newBoxes.push({name:"BOX2 (同型)", items: items.map((i,idx)=>({...i, id:`${tid}-2-${idx}`, status:'pending'}))});
-                
-                items = [
-                    {type:'RBC',units:2, realType:abo}, {type:'FFP',units:2, realType:abo},
-                    {type:'PC',units:10, realType:abo}, {type:'PC',units:10, realType:abo}
-                ];
-                newBoxes.push({name:"BOX3 (PC含)", items: items.map((i,idx)=>({...i, id:`${tid}-3-${idx}`, status:'pending'}))});
-                
-                logMsg = `📦 MTPオーダー② BOX2+3(同型 ${abo}型) 発注`;
-                chatMsg = "📦 オーダー② (BOX2+3) 指示";
+            lastBloodState = currentBlood;
+
+            const bb = document.getElementById('bloodBig');
+            if(data.blood_res && data.blood_res.abo) {
+                bb.classList.add('show');
+                document.getElementById('bloodBigText').textContent = currentBlood;
             }
 
-            const docRef = db.collection("mtp_sessions").doc(currentSessionId);
-            docRef.update({
-                boxes: firebase.firestore.FieldValue.arrayUnion(...newBoxes),
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:logMsg}),
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:chatMsg})
-            });
-        }
+            const bc = document.getElementById('boxesContainer');
+            bc.innerHTML = data.boxes.map((b, bIdx) => {
+                let batchHtml = "";
+                const allPending = b.items.every(i => i.status === 'pending');
+                const hasPrep = b.items.some(i => i.status === 'preparing');
+                const hasShipped = b.items.some(i => i.status === 'shipped');
 
-        // アイテム操作（配列の中身を更新するため、一度読んで書き換える）
-        function itemAction(bIdx, iId, st) {
-            const docRef = db.collection("mtp_sessions").doc(currentSessionId);
-            db.runTransaction(async (transaction) => {
-                const sfDoc = await transaction.get(docRef);
-                if (!sfDoc.exists) throw "Document does not exist!";
-                
-                const s = sfDoc.data();
-                const boxes = s.boxes;
-                const item = boxes[bIdx].items.find(i=>i.id===iId);
-                
-                if(!item) return;
-
-                // 在庫減算処理 (院内在庫マスターから引く)
-                if(st === 'shipped' && item.status !== 'shipped') {
-                    let p = item.type; 
-                    let t = item.realType || item.type;
-                    if(item.type === 'O_RBC') { p='RBC'; t='O'; }
-                    if(item.type === 'AB_FFP') { p='FFP'; t='AB'; }
-                    deductMasterStock(p, t, item.units);
+                if(ROLES.ADMIN.includes(myRole)) {
+                    if(allPending) batchHtml = `<button class="btn btn-sm btn-warn" onclick="batchAction(${bIdx}, 'preparing')">一括準備</button>`;
+                    else if(hasPrep) batchHtml = `<button class="btn btn-sm btn-primary" onclick="batchAction(${bIdx}, 'shipped')">一括出庫</button>`;
+                }
+                if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole)) {
+                    if(hasShipped) batchHtml = `<button class="btn btn-sm btn-success" onclick="batchAction(${bIdx}, 'arrived')">一括到着</button>`;
                 }
 
-                item.status = st;
-                
-                let statusText = "";
-                if(st==='preparing') statusText = "準備開始";
-                if(st==='shipped') statusText = "出庫完了";
-                if(st==='arrived') statusText = "現場到着";
-                if(st==='infusing') statusText = "投与開始";
-                
-                let usedUpdate = {};
-                if(st==='completed') {
-                    statusText = "投与完了";
-                    if(item.type.includes('RBC')) usedUpdate = {"used.RBC": firebase.firestore.FieldValue.increment(item.units)};
-                    else if(item.type.includes('FFP')) usedUpdate = {"used.FFP": firebase.firestore.FieldValue.increment(item.units)};
-                    else usedUpdate = {"used.PC": firebase.firestore.FieldValue.increment(item.units)};
-                }
-
-                const logEntry = {t:getTime(), r:myRole, m:`${item.type} ${item.units}U - ${statusText}`};
-                
-                transaction.update(docRef, { 
-                    boxes: boxes, 
-                    logs: firebase.firestore.FieldValue.arrayUnion(logEntry),
-                    ...usedUpdate
-                });
-            });
-        }
-        
-        // 院内在庫減算のヘルパー
-        function deductMasterStock(prod, type, units) {
-            let targetProd = prod.includes('RBC') ? 'RBC' : prod.includes('FFP') ? 'FFP' : 'PC';
-            let targetType = type.split('_')[0];
-            
-            const invRef = db.collection("master").doc("inventory");
-            // Firestoreのネストされたフィールド更新
-            const fieldPath = `${targetProd}.${targetType}`;
-            invRef.update({
-                [fieldPath]: firebase.firestore.FieldValue.increment(-units)
-            }).catch(err => console.log("Inventory update err (create new if needed)", err));
-        }
-
-        // ボックス一括操作
-        function batchBox(bIdx, st) {
-            if(st !== 'arrived' && !confirm("一括操作しますか？")) return;
-            const docRef = db.collection("mtp_sessions").doc(currentSessionId);
-
-            db.runTransaction(async (transaction) => {
-                const sfDoc = await transaction.get(docRef);
-                const s = sfDoc.data();
-                const boxes = s.boxes;
-                let count = 0;
-
-                boxes[bIdx].items.forEach(i=>{
-                    let changed = false;
-                    if(st==='preparing' && i.status==='pending') changed = true;
-                    if(st==='shipped' && i.status==='preparing') {
-                        let p = i.type; 
-                        let t = i.realType || i.type;
-                        if(i.type === 'O_RBC') { p='RBC'; t='O'; }
-                        if(i.type === 'AB_FFP') { p='FFP'; t='AB'; }
-                        deductMasterStock(p, t, i.units);
-                        changed = true;
-                    }
-                    if(st==='arrived' && i.status==='shipped') changed = true;
-                    
-                    if(changed) {
-                        i.status = st;
-                        count++;
-                    }
-                });
-                
-                if(count > 0) {
-                    let actionName = (st==='preparing')?"一括準備":(st==='shipped')?"一括出庫":"一括到着";
-                    const logEntry = {t:getTime(), r:myRole, m:`${boxes[bIdx].name} ${actionName} (${count}件)`};
-                    transaction.update(docRef, { boxes: boxes, logs: firebase.firestore.FieldValue.arrayUnion(logEntry) });
-                }
-            });
-        }
-
-        // フラグ切り替え系
-        function toggleDocBtn(k,m) {
-            const docRef = db.collection("mtp_sessions").doc(currentSessionId);
-            const currentVal = currentSessionData.doc_flags ? currentSessionData.doc_flags[k] : false;
-            const newVal = !currentVal;
-            const action = newVal ? "ON" : "OFF";
-            
-            docRef.update({
-                [`doc_flags.${k}`]: newVal,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🚨 ${m} ${action}`}),
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🚨 ${m} (${action})`})
-            });
-        }
-        
-        function toggleMed(k, label) {
-            const docRef = db.collection("mtp_sessions").doc(currentSessionId);
-            const currentVal = currentSessionData.medications ? currentSessionData.medications[k] : false;
-            const newVal = !currentVal;
-            const action = newVal ? "投与指示" : "指示取消";
-
-            docRef.update({
-                [`medications.${k}`]: newVal,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`💊 ${label} ${action}`}),
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`💊 ${label} ${action}`})
-            });
-        }
-        
-        function toggleRapid() {
-            const docRef = db.collection("mtp_sessions").doc(currentSessionId);
-            const currentVal = currentSessionData.rapid_infuser || false;
-            const newVal = !currentVal;
-            const msg = newVal ? "ラピッドインヒューザー使用開始" : "ラピッドインヒューザー停止";
-
-            docRef.update({
-                rapid_infuser: newVal,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`⚡ ${msg}`}),
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`⚡ ${msg}`})
-            });
-        }
-
-        // 血液型
-        function setBloodType(t) {
-            if(!ROLES.BLOOD.includes(myRole)) return;
-            const s = currentSessionData;
-            if(s.blood_res.abo !== t) {
-                db.collection("mtp_sessions").doc(currentSessionId).update({
-                    "blood_res.abo": t,
-                    logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🩸 血液型判定: ${t}型`}),
-                    chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🩸 血液型: ${t}型 確定`})
-                });
-            }
-        }
-        
-        function setRh(t) {
-            if(!ROLES.BLOOD.includes(myRole)) return;
-            const s = currentSessionData;
-            const v = t==='+'?'+':'-';
-            if(s.blood_res.rh !== v) {
-                db.collection("mtp_sessions").doc(currentSessionId).update({
-                    "blood_res.rh": v,
-                    logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🩸 Rh判定: Rh(${v})`}),
-                    chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🩸 Rh: Rh(${v}) 確定`})
-                });
-            }
-        }
-        
-        function setIrreg(val) {
-            if(!ROLES.BLOOD.includes(myRole)) return;
-            const s = currentSessionData;
-            if(s.blood_res.irreg_type !== val) {
-                let msg = (val==='pos') ? "不規則抗体: あり" : "不規則抗体: なし";
-                db.collection("mtp_sessions").doc(currentSessionId).update({
-                    "blood_res.irreg_type": val,
-                    logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🩸 ${msg}`}),
-                    chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`🩸 ${msg}`})
-                });
-            }
-        }
-
-        // チャット送信
-        function sendChat() {
-            const el = document.getElementById("chatInput");
-            if(el && el.value.trim()) { postChat(el.value.trim()); el.value=""; }
-        }
-        
-        function postChat(m) {
-            if(!currentSessionId) return;
-            addLog(`[チャット] ${m}`);
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:m})
-            });
-        }
-        
-        function addLog(msg) {
-            if(!currentSessionId) return;
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:msg})
-            });
-        }
-        
-        function endMTP() {
-            if(!confirm("MTPを終了しますか？（投与は継続できます）")) return;
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                status: "ended",
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:"🏁 MTP終了宣言"}),
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:"🏁 MTP終了"})
-            });
-        }
-        
-        function moveToWard() {
-            if(!confirm("病棟入室として症例を完結しますか？")) return;
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                status: "completed",
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:"🏥 病棟入室・症例完結"})
-            }).then(() => location.reload());
-        }
-
-        // --- Utility ---
-        function renderBoxes(session) {
-            const container = document.getElementById("boxesContainer");
-            const isBlood = ROLES.BLOOD.includes(myRole);
-            const isNurse = ['記録Ns', '介助Ns', 'MTP搬送者', '臨床工学技師'].includes(myRole);
-            let html = "";
-            session.boxes.forEach((box, index) => {
-                const hasItems = box.items.length > 0;
-                const isCompleted = box.items.every(i => i.status === 'completed');
-                const boxClass = (hasItems && !isCompleted) ? "box-card active-box" : "box-card";
-
-                let itemsHtml = box.items.map(item => {
-                    let stClass = "st-pending", stText = "未処理";
-                    if(item.status === 'preparing') { stClass="st-preparing"; stText="準備中"; }
-                    if(item.status === 'shipped') { stClass="st-shipped"; stText="出庫済"; }
-                    if(item.status === 'arrived') { stClass="st-arrived"; stText="到着"; }
-                    if(item.status === 'infusing') { stClass="st-infusing"; stText="投与中"; }
-                    if(item.status === 'completed') { stClass="st-completed"; stText="完了"; }
-                    
+                const rows = b.items.map((i, iIdx) => {
                     let btn = "";
-                    if(isBlood) {
-                        if(item.status==='pending') btn = `<button class="btn btn-warning btn-sm" onclick="itemAction('${index}','${item.id}','preparing')">準備</button>`;
-                        else if(item.status==='preparing') btn = `<button class="btn btn-primary btn-sm" onclick="itemAction('${index}','${item.id}','shipped')">出庫</button>`;
-                    } else {
-                        if(item.status==='shipped') btn = `<button class="btn btn-success btn-sm" onclick="itemAction('${index}','${item.id}','arrived')">到着</button>`;
-                        else if(item.status==='arrived') btn = `<button class="btn btn-primary btn-sm" onclick="itemAction('${index}','${item.id}','infusing')">開始</button>`;
-                        else if(item.status==='infusing') btn = `<button class="btn btn-success btn-sm" onclick="itemAction('${index}','${item.id}','completed')">完了</button>`;
+                    if(ROLES.ADMIN.includes(myRole)) {
+                        if(i.status==='pending') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'preparing')">準備</button>`;
+                        else if(i.status==='preparing') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'shipped')">出庫</button>`;
                     }
-                    return `<div class="item-row"><div>${item.type} ${item.units}U</div><div class="status-badge-item ${stClass}">${stText}</div><div style="text-align:right;">${btn}</div></div>`;
+                    if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole) || ROLES.CE.includes(myRole)) {
+                        if(i.status==='shipped') btn = `<button class="btn btn-sm btn-success" onclick="updateItem(${bIdx},${iIdx},'arrived')">到着</button>`;
+                        else if(i.status==='arrived') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'infusing')">開始</button>`;
+                        else if(i.status==='infusing') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
+                    }
+                    return `
+                    <div class="item-row">
+                        <div>${i.type} (${i.units}U)</div>
+                        <div class="st-badge st-${i.status}">${i.status}</div>
+                        <div style="text-align:right;">${btn}</div>
+                    </div>`;
                 }).join("");
-                
-                let batchBtn = "";
-                if(isBlood) {
-                    if(box.items.every(i=>i.status==='pending')) batchBtn=`<button class="btn btn-warning btn-sm" onclick="batchBox('${index}','preparing')">一括準備</button>`;
-                    else if(box.items.some(i=>i.status==='preparing')) batchBtn=`<button class="btn btn-primary btn-sm" onclick="batchBox('${index}','shipped')">一括出庫</button>`;
-                } else if(isNurse) {
-                    if(box.items.some(i=>i.status==='shipped')) batchBtn=`<button class="btn btn-success btn-sm" onclick="batchBox('${index}','arrived')">一括到着</button>`;
-                }
-                html += `<div class="${boxClass}"><div class="box-header"><span>📦 ${box.name}</span><div>${batchBtn}</div></div><div>${itemsHtml}</div></div>`;
-            });
-            container.innerHTML = html;
-        }
 
-        function renderLab(session, isBlood) {
-            const buttons = ['btnA', 'btnB', 'btnO', 'btnAB', 'btnRhP', 'btnRhM', 'btnIrregNeg', 'btnIrregPos'];
-            buttons.forEach(btnId => {
-                const btn = document.getElementById(btnId);
-                if(btn) {
-                    btn.disabled = !isBlood;
-                    btn.classList.remove('selected-abo', 'selected-rh', 'active');
-                }
-            });
-            if(session.blood_res.abo) {
-                const aboBtn = document.getElementById('btn' + session.blood_res.abo);
-                if(aboBtn) aboBtn.classList.add('selected-abo');
-            }
-            if(session.blood_res.rh) {
-                const rhBtn = document.getElementById('btnRh' + (session.blood_res.rh === '+' ? 'P' : 'M'));
-                if(rhBtn) rhBtn.classList.add('selected-rh');
-            }
-            if(session.blood_res.irreg_type === 'neg') {
-                const btn = document.getElementById('btnIrregNeg');
-                if(btn) btn.classList.add('active');
-            }
-            if(session.blood_res.irreg_type === 'pos') {
-                const btn = document.getElementById('btnIrregPos');
-                if(btn) btn.classList.add('active');
-            }
-        }
+                return `
+                <div class="box-card ${b.items.every(x=>x.status==='completed')?'':'active'}">
+                    <div class="box-header">
+                        <span class="box-title">📦 ${b.name}</span>
+                        <div>${batchHtml}</div>
+                    </div>
+                    ${rows}
+                </div>`;
+            }).join("");
 
-        function renderLogs(s) {
-            if(!s.logs) s.logs = [];
-            if(!s.chats) s.chats = [];
-            
-            document.getElementById("tabLog").innerHTML = s.logs.slice().reverse().map(l=>
-                `<div class="log-entry"><span style="color:#718096;">[${l.t}]</span> <strong>${l.r}:</strong> ${l.m}</div>`
+            const logs = [...(data.logs||[]), ...(data.chats||[])].sort((a,b) => a.t > b.t ? 1 : -1);
+            document.getElementById('logContainer').innerHTML = logs.slice().reverse().map(l => 
+                `<div class="log-item"><span class="log-time">${l.t}</span> <strong>${l.r}:</strong> ${l.m}</div>`
             ).join("");
-            
-            const chatEl = document.getElementById("chatArea");
-            const wasBottom = (chatEl.scrollHeight - chatEl.scrollTop <= chatEl.clientHeight + 50);
-            chatEl.innerHTML = s.chats.map(l=>
-                `<div class="log-entry"><span style="color:#718096;">[${l.t}]</span> <strong>${l.r}:</strong> ${l.m}</div>`
-            ).join("");
-            if(wasBottom) chatEl.scrollTop = chatEl.scrollHeight;
+
+            updateFlag('btnWarn', data.flags?.warn, 'bg-warn');
+            updateFlag('btnBlood', data.flags?.blood, 'bg-blood');
+            updateFlag('btnRapid', data.flags?.rapid, 'bg-ce');
+            ['fib','trans','k2','prax','kcentra'].forEach(k => updateFlag('btn'+k.charAt(0).toUpperCase()+k.slice(1), data.meds?.[k], 'bg-med'));
+
+            let sum = `【MTP記録 ID:${data.id}】${data.location}\n`;
+            sum += `総投与: RBC${data.used.RBC} / FFP${data.used.FFP} / PC${data.used.PC}\n`;
+            if(data.blood_res.abo) sum += `血液型: ${data.blood_res.abo}型 Rh(${data.blood_res.rh})\n`;
+            sum += `\n--- ログ ---\n`;
+            logs.forEach(l => sum += `[${l.t}] ${l.m}\n`);
+            document.getElementById('summaryText').value = sum;
         }
 
-        function updateSummary(s) {
-            if(!s.logs) s.logs = [];
-            
-            let txt = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-            txt += `     MTP活動記録サマリー\n`;
-            txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-            txt += `【患者情報】\n`;
-            txt += `  患者ID: ${s.id}\n`;
-            txt += `  場所: ${s.location}\n`;
-            txt += `  発動時刻: ${s.start_time}\n`;
-            txt += `  状態: ${s.status === 'active' ? 'MTP発動中' : s.status === 'ended' ? 'MTP終了' : '完結'}\n\n`;
-            
-            if(s.blood_res.abo && s.blood_res.rh) {
-                txt += `【血液型】\n`;
-                txt += `  ${s.blood_res.abo}型 Rh(${s.blood_res.rh})\n`;
-                if(s.blood_res.irreg_type) {
-                    txt += `  不規則抗体: ${s.blood_res.irreg_type === 'pos' ? 'あり' : 'なし'}\n`;
+        function updateFlag(id, isActive, bgClass) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            if(isActive) { el.classList.add('active-on', bgClass); } 
+            else { el.classList.remove('active-on', bgClass); }
+        }
+
+        // --- Logic ---
+        function orderMTP(type) {
+            if (type === 2) {
+                if (!currentSessionData.blood_res || !currentSessionData.blood_res.abo) {
+                    return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
                 }
-                txt += `\n`;
             }
-            
-            txt += `【累計投与量】\n`;
-            txt += `  RBC: ${s.used.RBC} 単位\n`;
-            txt += `  FFP: ${s.used.FFP} 単位\n`;
-            txt += `  PC: ${s.used.PC} 単位\n\n`;
-            
-            txt += `【時系列投与経過】\n`;
-            let infusionLogs = s.logs.filter(l => l.m.includes('投与開始') || l.m.includes('投与完了') || l.m.includes('到着') || l.m.includes('出庫'));
-            if(infusionLogs.length > 0) {
-                infusionLogs.forEach(log => {
-                    txt += `  [${log.t}] ${log.m}\n`;
-                });
+
+            const currentBoxes = currentSessionData.boxes || [];
+            let newBoxes = [];
+            let logMsg = "";
+
+            if(type===1) {
+                const count = currentBoxes.filter(b => b.name.startsWith("BOX1")).length + 1;
+                const name = `BOX1-${count} (異型)`;
+                const items = [
+                    {type:'O_RBC', units:2, status:'pending'}, {type:'O_RBC', units:2, status:'pending'}, {type:'O_RBC', units:2, status:'pending'},
+                    {type:'AB_FFP', units:2, status:'pending'}, {type:'AB_FFP', units:2, status:'pending'}, {type:'AB_FFP', units:2, status:'pending'}
+                ];
+                newBoxes.push({ name: name, items: items });
+                logMsg = `📦 オーダー① (${name}) 指示`;
             } else {
-                txt += `  (投与記録なし)\n`;
+                const abo = currentSessionData.blood_res.abo || 'O';
+                const count2 = currentBoxes.filter(b => b.name.startsWith("BOX2")).length + 1;
+                const count3 = currentBoxes.filter(b => b.name.startsWith("BOX3")).length + 1;
+
+                const name2 = `BOX2-${count2} (同型)`;
+                const items2 = [
+                    {type:abo+'_RBC', units:2, status:'pending'}, {type:abo+'_RBC', units:2, status:'pending'},
+                    {type:abo+'_FFP', units:2, status:'pending'}, {type:abo+'_FFP', units:2, status:'pending'}
+                ];
+                newBoxes.push({ name: name2, items: items2 });
+
+                const name3 = `BOX3-${count3} (PC含)`;
+                const items3 = [
+                    {type:abo+'_RBC', units:2, status:'pending'}, 
+                    {type:abo+'_FFP', units:2, status:'pending'},
+                    {type:abo+'_PC', units:10, status:'pending'}, {type:abo+'_PC', units:10, status:'pending'}
+                ];
+                newBoxes.push({ name: name3, items: items3 });
+                logMsg = `📦 オーダー② (${name2} + ${name3}) 指示`;
             }
-            txt += `\n`;
-            txt += `【全活動ログ】\n`;
-            txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-            s.logs.forEach(l => {
-                txt += `[${l.t}] ${l.r}: ${l.m}\n`;
-            });
-            txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
             
-            document.getElementById('realtimeSummary').value = txt;
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                boxes: firebase.firestore.FieldValue.arrayUnion(...newBoxes),
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:logMsg})
+            });
+        }
+
+        function updateItem(bIdx, iIdx, nextSt) {
+            const ref = db.collection("mtp_sessions").doc(currentSessionId);
+            db.runTransaction(async t => {
+                const doc = await t.get(ref);
+                const d = doc.data();
+                const item = d.boxes[bIdx].items[iIdx];
+                
+                if(nextSt === 'shipped' && item.status !== 'shipped') {
+                    let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
+                    let ty = item.type.split('_')[0] || 'O';
+                    db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
+                }
+                if(nextSt === 'completed') {
+                    let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
+                    t.update(ref, { [`used.${p}`]: firebase.firestore.FieldValue.increment(item.units) });
+                }
+                item.status = nextSt;
+                t.update(ref, { boxes: d.boxes });
+            });
+        }
+
+        function batchAction(bIdx, nextSt) {
+            if(!confirm("一括操作しますか？")) return;
+            const ref = db.collection("mtp_sessions").doc(currentSessionId);
+            db.runTransaction(async t => {
+                const doc = await t.get(ref);
+                const d = doc.data();
+                const box = d.boxes[bIdx];
+                let count = 0;
+                
+                box.items.forEach(i => {
+                    let doUp = false;
+                    if(nextSt==='preparing' && i.status==='pending') doUp=true;
+                    if(nextSt==='shipped' && i.status==='preparing') {
+                        let p = i.type.includes('RBC')?'RBC':i.type.includes('FFP')?'FFP':'PC';
+                        let ty = i.type.split('_')[0] || 'O';
+                        db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-i.units) });
+                        doUp=true;
+                    }
+                    if(nextSt==='arrived' && i.status==='shipped') doUp=true;
+
+                    if(doUp) { i.status = nextSt; count++; }
+                });
+                if(count>0) {
+                    t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${box.name} 一括${nextSt} (${count})`}) });
+                }
+            });
+        }
+
+        function toggleFlag(k, msg, bgClass) {
+            const v = !currentSessionData.flags?.[k];
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                [`flags.${k}`]: v,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${msg} ${v?'ON':'OFF'}`})
+            });
+        }
+        function toggleMed(k, msg) {
+            const v = !currentSessionData.meds?.[k];
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                [`meds.${k}`]: v,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`投与指示: ${msg} ${v?'ON':'OFF'}`})
+            });
+        }
+        
+        function setBlood(val) {
+            if(!ROLES.ADMIN.includes(myRole)) return;
+            if(currentSessionData.blood_res.abo !== val) {
+                db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.abo': val });
+            }
+        }
+        function setRh(val) {
+            if(!ROLES.ADMIN.includes(myRole)) return;
+            const v = val==='+'?'+':'-';
+            if(currentSessionData.blood_res.rh !== v) {
+                db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.rh': v });
+            }
+        }
+        function setIrreg(val) {
+            if(!ROLES.ADMIN.includes(myRole)) return;
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.irreg': val });
+        }
+
+        function endMTP() {
+            if(confirm("終了宣言しますか？")) {
+                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'ended' });
+            }
+        }
+        function moveToWard() {
+            if(confirm("病棟入室（完結）しますか？")) {
+                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'completed' }).then(()=>location.reload());
+            }
+        }
+
+        function sendChat() {
+            const t = document.getElementById('chatInput').value;
+            if(!t) return;
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:t})
+            });
+            document.getElementById('chatInput').value = "";
+        }
+        
+        function renderCanned() {
+            let list = CANNED.DOCTOR;
+            if(ROLES.ADMIN.includes(myRole)) list = CANNED.ADMIN;
+            if(ROLES.NURSE.includes(myRole)) list = CANNED.NURSE;
+            if(ROLES.TRANS.includes(myRole)) list = CANNED.TRANS;
+            document.getElementById('cannedArea').innerHTML = list.map(c => 
+                `<div class="canned-btn" onclick="document.getElementById('chatInput').value='${c}';sendChat()">${c}</div>`
+            ).join("");
         }
 
         function copySummary() {
-            const textarea = document.getElementById('realtimeSummary');
-            textarea.select();
+            document.getElementById('summaryText').select();
             document.execCommand('copy');
-            alert('サマリーをクリップボードにコピーしました');
+            alert('コピーしました');
         }
-
-        function generateStockTableHTML(idPrefix, editable) {
-            const products = [{k:'RBC', s:2}, {k:'FFP', s:2}, {k:'PC', s:10}];
-            let rows = products.map(p => {
-                const cols = ['A','B','O','AB'].map(t => {
-                    const id = `${idPrefix}_${p.k}_${t}`;
-                    const attr = editable ? `onfocus="onStockFocus()" oninput="onStockInput(this)" onchange="onStockChange(this)" onkeydown="onStockKeyDown(event, this)"` : `disabled`;
-                    return `<td><input type="number" id="${id}" min="0" step="${p.s}" class="stock-input" ${attr}></td>`;
-                }).join("");
-                return `<tr><th>${p.k}</th>${cols}</tr>`;
-            }).join("");
-            return `<table class="stock-table"><thead><tr><th>製剤</th><th>A</th><th>B</th><th>O</th><th>AB</th></tr></thead><tbody>${rows}</tbody></table>`;
-        }
-
-        function openStockEdit() { document.getElementById("stockEditModal").classList.add("active"); }
-        function closeStockEdit() { document.getElementById("stockEditModal").classList.remove("active"); }
-        function showTab(n) {
-            document.getElementById("tabLog").classList.add("hidden");
-            document.getElementById("tabChat").classList.add("hidden");
-            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-            const btns = document.querySelectorAll(".tab-btn");
-            if(n==='chat') { btns[0].classList.add("active"); document.getElementById("tabChat").classList.remove("hidden"); }
-            else { btns[1].classList.add("active"); document.getElementById("tabLog").classList.remove("hidden"); }
-        }
-        function showBloodPopup(a,r) {
-            document.getElementById('bloodPopupText').textContent = `${a}型 Rh(${r})`;
-            document.getElementById('bloodPopup').classList.add('active');
-            setTimeout(()=>document.getElementById('bloodPopup').classList.remove('active'), 3000);
-        }
-        function getTime() { return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
-        
-        // Chat Input
-        const chatInput = document.getElementById('chatInput');
-        if(chatInput) {
-            chatInput.addEventListener('keypress', function(e) {
-                if(e.key === 'Enter') sendChat();
-            });
-        }
+        function getTime() { return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
     </script>
 </body>
 </html>
