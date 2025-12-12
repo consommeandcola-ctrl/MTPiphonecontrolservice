@@ -95,9 +95,9 @@
         .stock-display-btn.editable { color: #3182ce; border-color: #3182ce; background: #ebf8ff; cursor: pointer; }
         .stock-display-btn:active.editable { background: #bee3f8; }
 
-        /* Picker Overlay */
+        /* Picker Overlay - Z-INDEX修正: 2000 -> 3000 */
         #pickerModal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000;
             display: none; align-items: flex-end; opacity: 0; transition: opacity 0.2s;
         }
         #pickerModal.show { display: flex; opacity: 1; }
@@ -198,7 +198,7 @@
         
         #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
         
-        /* Modal */
+        /* Modal - Z-INDEX 2000 */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 480px; padding: 20px; max-height: 90vh; overflow-y: auto; }
@@ -209,11 +209,11 @@
         }
         .role-btn:active { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; }
 
-        /* Blood Big Display (Static) */
+        /* Blood Big Display */
         .blood-big { background: #e53e3e; color: white; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .blood-big.show { display: block; animation: fadeIn 0.5s; }
 
-        /* FULL SCREEN POPUP */
+        /* Full Screen Popup */
         .blood-popup { display: none; position: fixed; inset: 0; background: rgba(229, 62, 62, 0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; color: white; animation: flashIn 0.3s; pointer-events: none; }
         .blood-popup h1 { font-size: 24px; margin-bottom: 10px; letter-spacing: 2px; border-bottom: 2px solid white; padding-bottom: 5px; }
         .blood-popup div { font-size: 60px; font-weight: 800; text-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -280,10 +280,8 @@
                         <input type="text" id="newPid" class="stock-input" placeholder="ID" style="border:1px solid #cbd5e0; border-radius:4px; flex:1; text-align:left; padding-left:10px; height:44px;">
                         <select id="newLoc" style="border:1px solid #cbd5e0; border-radius:4px; width:100px; padding:5px; font-size:14px; background:white; height:44px;">
                             <option value="ER">ER</option>
-                            <option value="OR">OR</option>
-                            <option value="ICU">ICU</option>
                             <option value="救急病棟">救急病棟</option>
-
+                            <option value="OR">OR</option>
                         </select>
                         <button class="btn btn-danger" onclick="startNewSession()">発動</button>
                     </div>
@@ -330,7 +328,7 @@
                 <span id="stockModeLabel" style="font-size:10px; font-weight:normal; color:#718096;">閲覧のみ</span>
             </div>
             <div id="viewStockTableWrapper"></div>
-            <p style="font-size:10px; color:#718096; margin-top:5px;">※輸血検査部のみ編集可能。RBC/FFPは±2、PCは±10で増減。</p>
+            <p style="font-size:10px; color:#718096; margin-top:5px;">※輸血検査部のみ編集可能。タップしてダイヤルで変更。</p>
         </div>
 
         <div id="tabAction" class="tab-view active-view">
@@ -478,8 +476,8 @@
         };
 
         const CANNED = {
-            DOCTOR: ['開腹開始',  'IVR開始',  '開胸開始',  '開頭術開始',  'REBOA挿入',  '止血完了'],
-            ADMIN: ['異型対応',  '同型未クロス',   '以後クロスマッチ済み',   '在庫取り寄せ要',   '出庫完了'],
+            DOCTOR: ['開腹術開始', 'IVR開始', 'バイタル不安定', 'REBOA挿入', '止血確認'],
+            ADMIN: ['異型対応', '同型未クロス', '在庫確認中', '出庫完了'],
             NURSE: ['到着', '投与開始', '急速輸血中', '血型提出済'],
             TRANS: ['到着', '次のオーダー依頼', '了解']
         };
