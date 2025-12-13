@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v36.1</title>
+    <title>MTP Cloud Mobile v39.1 (2025/12/13 更新)</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -14,12 +14,20 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif; 
-            background: #f0f2f5; 
+            background: #e2e8f0; 
             height: 100dvh; 
             color: #2d3748; 
             overflow: hidden; 
             display: flex;
             flex-direction: column;
+            
+            /* PC View Optimization */
+            max-width: 480px;
+            margin: 0 auto;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+            background-color: #f0f2f5;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         input, textarea, select { user-select: text; }
 
@@ -51,8 +59,10 @@
 
         /* --- Main Viewport --- */
         .main-viewport {
-            flex: 1; position: relative; overflow: hidden; background: #f7fafc;
+            flex: 1; position: relative; overflow: hidden; background: #f7fafc; cursor: grab;
         }
+        .main-viewport:active { cursor: grabbing; }
+        
         .tab-view {
             position: absolute; inset: 0; 
             overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -81,7 +91,7 @@
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #a0aec0; font-size: 10px; font-weight: bold; transition: 0.2s;
+            color: #a0aec0; font-size: 10px; font-weight: bold; transition: 0.2s; cursor: pointer;
         }
         .nav-item.active { color: #3182ce; background: #ebf8ff; }
         .nav-icon { font-size: 20px; margin-bottom: 2px; }
@@ -124,7 +134,8 @@
             padding: 10px 15px; border-bottom: 1px solid #edf2f7; background: #f7fafc; border-radius: 16px 16px 0 0;
         }
         .picker-title { font-weight: bold; font-size: 14px; color: #4a5568; }
-        .picker-wheel-container { height: 200px; position: relative; overflow: hidden; background: white; }
+        .picker-wheel-container { height: 200px; position: relative; overflow: hidden; background: white; cursor: grab; }
+        .picker-wheel-container:active { cursor: grabbing; }
         .picker-wheel { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; padding: 80px 0; }
         .picker-wheel::-webkit-scrollbar { display: none; }
         .picker-item {
@@ -141,7 +152,7 @@
         .mtp-btn {
             width: 100%; padding: 12px; border-radius: 8px; border: none; color: white;
             text-align: left; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative; overflow: hidden; transition: transform 0.1s;
+            position: relative; overflow: hidden; transition: transform 0.1s; cursor: pointer;
         }
         .mtp-btn:active { transform: scale(0.98); }
         .mtp-btn-1 { background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%); }
@@ -154,11 +165,10 @@
             padding: 8px 2px; border: 1px solid #cbd5e0; border-radius: 6px; background: white;
             font-size: 11px; font-weight: bold; color: #4a5568; text-align: center;
             min-height: 44px; display: flex; align-items: center; justify-content: center;
-            flex-direction: column; line-height: 1.2; transition: 0.1s;
+            flex-direction: column; line-height: 1.2; transition: 0.1s; cursor: pointer;
         }
         .doc-btn:active { background: #ebf8ff; }
         
-        /* Flag Colors */
         .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .bg-warn { background: #c05621 !important; }
         .bg-blood { background: #805ad5 !important; }
@@ -189,23 +199,24 @@
         .log-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid #eee; }
         .log-time { color: #a0aec0; font-size: 10px; margin-right: 4px; }
         
-        #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; max-width:480px; margin:0 auto; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); right:0; }
         
         /* Modal - Z-INDEX 2000 */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
-        .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 480px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; max-height: 90vh; overflow-y: auto; }
         .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
         .role-btn { 
             border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; 
             font-size: 12px; font-weight: bold; color: #4a5568; display: flex; flex-direction: column; gap: 4px; 
+            cursor: pointer;
         }
         .role-btn:active { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; }
 
         /* Session Item Styles */
         .session-item {
             background: #fff; border: 1px solid #cbd5e0; padding: 10px; border-radius: 8px; 
-            display: flex; justify-content: space-between; align-items: center; position: relative;
+            display: flex; justify-content: space-between; align-items: center; position: relative; cursor: pointer;
         }
         .delete-icon-btn {
             position: absolute; top: -5px; left: -5px; width: 24px; height: 24px;
@@ -493,7 +504,7 @@
 
         const CANNED = {
             DOCTOR: ['開腹術開始', 'IVR開始', 'バイタル不安定', 'REBOA挿入', '止血確認'],
-            ADMIN: ['異型対応', '同型未クロス', '在庫確認中', '出庫完了'],
+            ADMIN: ['異型で出庫', '同型未クロスで出庫', '以後クロスマッチ済み', '同型血在庫が切れます'],
             NURSE: ['到着', '投与開始', '急速輸血中', '血型提出済'],
             TRANS: ['到着', '次のオーダー依頼', '了解']
         };
@@ -501,6 +512,16 @@
         // =================================================================
         // UI & NAVIGATION
         // =================================================================
+        function generateAutoId() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = (now.getMonth()+1).toString().padStart(2, '0');
+            const d = now.getDate().toString().padStart(2, '0');
+            const h = now.getHours().toString().padStart(2, '0');
+            const min = now.getMinutes().toString().padStart(2, '0');
+            return `${y}${m}${d}${h}${min}`;
+        }
+
         function selectRole(role) {
             if (ROLES.MANAGER.includes(role)) {
                 const id = prompt("管理者IDを入力してください");
@@ -517,6 +538,10 @@
             const isManager = ROLES.MANAGER.includes(role);
             const isAdmin = ROLES.ADMIN.includes(role);
             
+            if(!isManager) {
+                document.getElementById('newPid').value = generateAutoId();
+            }
+
             if(isManager) {
                 document.getElementById('researchPanel').classList.remove('hidden');
                 document.getElementById('sessionList').classList.add('hidden');
@@ -562,6 +587,8 @@
             document.getElementById('bloodBig').classList.remove('show');
             document.querySelectorAll('.bg-selected-blood').forEach(el => el.classList.remove('bg-selected-blood'));
             
+            document.getElementById('newPid').value = generateAutoId();
+
             if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession=null; }
             document.getElementById('loginModal').classList.add('active');
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
@@ -586,7 +613,58 @@
         }
 
         // =================================================================
-        // INVENTORY LOGIC
+        // UI HELPERS (MOUSE/TOUCH)
+        // =================================================================
+        let touchStartX = 0;
+        let isMouseDown = false;
+        const viewport = document.getElementById('mainViewport');
+        
+        viewport.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        viewport.addEventListener('touchend', e => { handleSwipe(touchStartX, e.changedTouches[0].screenX); });
+        
+        // PC Mouse Swipe
+        viewport.addEventListener('mousedown', e => { touchStartX = e.screenX; isMouseDown = true; });
+        viewport.addEventListener('mouseup', e => { if(isMouseDown) handleSwipe(touchStartX, e.screenX); isMouseDown = false; });
+        viewport.addEventListener('mouseleave', () => isMouseDown = false);
+
+        function handleSwipe(start, end) {
+            if (end < start - 50) nextTab();
+            if (end > start + 50) prevTab();
+        }
+
+        function nextTab() {
+            const current = document.querySelector('.nav-item.active');
+            if(current && current.nextElementSibling) current.nextElementSibling.click();
+        }
+        function prevTab() {
+            const current = document.querySelector('.nav-item.active');
+            if(current && current.previousElementSibling) current.previousElementSibling.click();
+        }
+
+        // PC Mouse Drag for Picker
+        const wheel = document.getElementById('pickerWheel');
+        let isWheelDown = false;
+        let wheelStartY;
+        let wheelStartScroll;
+
+        wheel.addEventListener('mousedown', (e) => {
+            isWheelDown = true;
+            wheelStartY = e.pageY;
+            wheelStartScroll = wheel.scrollTop;
+        });
+        wheel.addEventListener('mousemove', (e) => {
+            if(!isWheelDown) return;
+            e.preventDefault();
+            const y = e.pageY;
+            const walk = (y - wheelStartY) * 1.5; 
+            wheel.scrollTop = wheelStartScroll - walk;
+        });
+        wheel.addEventListener('mouseup', () => isWheelDown = false);
+        wheel.addEventListener('mouseleave', () => isWheelDown = false);
+
+
+        // =================================================================
+        // INVENTORY LOGIC (DRUM PICKER)
         // =================================================================
         function renderStockTable(wrapperId, editable) {
             const el = document.getElementById(wrapperId);
@@ -703,7 +781,6 @@
             const pid = document.getElementById('newPid').value.trim();
             const loc = document.getElementById('newLoc').value;
             if(!pid) return alert("IDを入力してください");
-            // 【重要】irreg:'' で初期化（白抜き開始）
             db.collection("mtp_sessions").doc(pid).set({
                 id: pid, location: loc, status: 'active',
                 start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
@@ -803,6 +880,7 @@
                     pop.classList.remove('active');
                     void pop.offsetWidth; 
                     pop.classList.add('active');
+                    playBeep(); // BEEP SOUND
                     setTimeout(()=>pop.classList.remove('active'), 3000);
                     bloodPopupShown = true;
                 }
@@ -867,9 +945,13 @@
                             else if(i.status==='infusing') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
                         }
                     }
+                    // Auto-Numbering Display (v37.0)
+                    let tagHtml = "";
+                    if(i.tag) tagHtml = `<span style="font-weight:bold; color:#e53e3e; font-size:14px; margin-left:5px;">${i.tag}</span>`;
+
                     return `
                     <div class="item-row">
-                        <div>${i.type} (${i.units}U)</div>
+                        <div>${i.type} (${i.units}U)${tagHtml}</div>
                         <div class="st-badge st-${i.status}">${i.status}</div>
                         <div style="text-align:right;">${btn}</div>
                     </div>`;
@@ -910,7 +992,7 @@
             else { el.classList.remove('active-on', bgClass); }
         }
 
-        // ... (Remaining Logic kept as is) ...
+        // ... (Logic functions similar to v35.1) ...
         function orderMTP(type) {
             if (type === 2 && (!currentSessionData.blood_res || !currentSessionData.blood_res.abo)) {
                 return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
@@ -964,6 +1046,26 @@
                     if(hospitalStock[p][ty] < item.units) { alert(`⚠️ 在庫不足！\n${p}(${ty}型)不足`); return; }
                     db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
                 }
+                
+                // Auto Numbering on Start (v37.0)
+                if(nextSt === 'infusing' && item.status !== 'infusing') {
+                    const prodType = item.type.includes('RBC') ? 'RBC' : (item.type.includes('FFP') ? 'FFP' : 'PC');
+                    let count = 0;
+                    d.boxes.forEach(box => {
+                        box.items.forEach(i => {
+                            const iType = i.type.includes('RBC') ? 'RBC' : (i.type.includes('FFP') ? 'FFP' : 'PC');
+                            if (iType === prodType && (i.status === 'infusing' || i.status === 'completed')) {
+                                count++;
+                            }
+                        });
+                    });
+                    const circleNum = (n) => {
+                        const circleMap = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
+                        return circleMap[n-1] || `(${n})`;
+                    };
+                    item.tag = circleNum(count + 1);
+                }
+
                 if(nextSt === 'completed') {
                     let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
                     t.update(ref, { [`used.${p}`]: firebase.firestore.FieldValue.increment(item.units) });
@@ -1020,9 +1122,29 @@
             db.collection("mtp_sessions").doc(currentSessionId).update({ [`meds.${k}`]: v, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`投与指示: ${msg} ${v?'ON':'OFF'}`}) });
         }
         
-        function setBlood(val) { if(!ROLES.ADMIN.includes(myRole)) return; db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.abo': val }); }
-        function setRh(val) { if(!ROLES.ADMIN.includes(myRole)) return; db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.rh': val }); }
-        function setIrreg(val) { if(!ROLES.ADMIN.includes(myRole)) return; db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.irreg': val }); }
+        // --- v39.1: Auto Log for Lab Actions ---
+        function setBlood(val) { 
+            if(!ROLES.ADMIN.includes(myRole)) return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 
+                'blood_res.abo': val,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`血液型確定: ${val}型`})
+            }); 
+        }
+        function setRh(val) { 
+            if(!ROLES.ADMIN.includes(myRole)) return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 
+                'blood_res.rh': val,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`Rh確定: Rh(${val})`})
+            }); 
+        }
+        function setIrreg(val) { 
+            if(!ROLES.ADMIN.includes(myRole)) return; 
+            const msg = val==='pos' ? 'あり' : 'なし';
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 
+                'blood_res.irreg': val,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`不規則抗体: ${msg}`})
+            }); 
+        }
 
         function endMTP() { if(confirm("終了宣言しますか？")) { db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'ended' }); } }
         function moveToWard() {
@@ -1062,6 +1184,27 @@
         }
         function copySummary() { document.getElementById('summaryText').select(); document.execCommand('copy'); alert('コピーしました'); }
         function getTime() { return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
+
+        // --- BEEP SOUND FUNCTION ---
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                // 3 short beeps
+                [0, 0.2, 0.4].forEach(t => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'square';
+                    osc.frequency.value = 880; // A5
+                    gain.gain.setValueAtTime(0.1, now + t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.1);
+                    osc.start(now + t);
+                    osc.stop(now + t + 0.1);
+                });
+            } catch(e) { console.error("Audio error:", e); }
+        }
     </script>
 </body>
 </html>
