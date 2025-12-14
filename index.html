@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v34.2 (12/14 22:10)</title>
+    <title>MTP Cloud Mobile v39.2 (12/14 22:30)</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -14,45 +14,56 @@
         /* --- Reset & Base --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
-            background: #f0f2f5; 
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif; 
+            background: #e2e8f0; 
             height: 100dvh; 
             color: #2d3748; 
             overflow: hidden; 
             display: flex;
             flex-direction: column;
+            
+            /* PC View Optimization */
+            max-width: 480px;
+            margin: 0 auto;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+            background-color: #f0f2f5;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         input, textarea, select { user-select: text; }
 
         /* --- Header (Fixed) --- */
         .app-header {
-            background: #1a202c;
-            color: white; padding: 8px 10px;
+            background: #1a202c; color: white; padding: 8px 10px;
             padding-top: env(safe-area-inset-top, 10px);
             flex-shrink: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .role-pill { font-size: 10px; background: #4a5568; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
         
-        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
         .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
         .st-standby { background: #718096; color: white; }
         .st-completed { background: #2f855a; color: white; }
 
         /* Stats Bar */
         .stats-bar {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-            background: #2d3748; padding: 5px; border-radius: 6px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            background: #fff; padding: 8px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            color: #2d3748;
         }
         .stat-group { display: flex; flex-direction: column; align-items: center; }
-        .stat-label { font-size: 9px; color: #a0aec0; margin-bottom: 2px; }
-        .stat-vals { display: flex; gap: 8px; font-size: 13px; font-weight: bold; font-family: monospace; }
-        .c-red { color: #fc8181; } .c-yel { color: #f6e05e; } .c-blu { color: #63b3ed; }
+        .stat-label { font-size: 10px; font-weight: bold; color: #4a5568; margin-bottom: 2px; }
+        .stat-vals { display: flex; gap: 10px; font-size: 16px; font-weight: 900; font-family: monospace; }
+        .c-red { color: #e53e3e; } .c-yel { color: #d69e2e; } .c-blu { color: #3182ce; }
 
         /* --- Main Viewport --- */
         .main-viewport {
-            flex: 1; position: relative; overflow: hidden; background: #f7fafc;
+            flex: 1; position: relative; overflow: hidden; background: #f7fafc; cursor: grab;
         }
+        .main-viewport:active { cursor: grabbing; }
+        
         .tab-view {
             position: absolute; inset: 0; 
             overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -62,14 +73,13 @@
         }
         .tab-view.active-view { transform: translateX(0); display: block; }
 
-        /* Read Only Mode Overlay */
+        /* Read Only Overlay */
         .read-only-overlay { position: relative; }
         .read-only-overlay::after {
             content: "参照モード (操作不可)";
             position: absolute; inset: 0; background: rgba(255,255,255,0.6);
             z-index: 50; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: #4a5568; font-size: 16px;
-            text-shadow: 0 1px 2px white;
+            font-weight: bold; color: #4a5568; font-size: 16px; text-shadow: 0 1px 2px white;
             pointer-events: all;
         }
 
@@ -82,7 +92,7 @@
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #a0aec0; font-size: 10px; font-weight: bold; transition: 0.2s;
+            color: #a0aec0; font-size: 10px; font-weight: bold; transition: 0.2s; cursor: pointer;
         }
         .nav-item.active { color: #3182ce; background: #ebf8ff; }
         .nav-icon { font-size: 20px; margin-bottom: 2px; }
@@ -114,33 +124,24 @@
             display: none; align-items: flex-end; opacity: 0; transition: opacity 0.2s;
         }
         #pickerModal.show { display: flex; opacity: 1; }
-        
         .picker-sheet {
             background: white; width: 100%; border-radius: 16px 16px 0 0;
             padding-bottom: env(safe-area-inset-bottom);
             transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
         #pickerModal.show .picker-sheet { transform: translateY(0); }
-
         .picker-toolbar {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 15px; border-bottom: 1px solid #edf2f7; background: #f7fafc; border-radius: 16px 16px 0 0;
         }
         .picker-title { font-weight: bold; font-size: 14px; color: #4a5568; }
-        
-        .picker-wheel-container {
-            height: 200px; position: relative; overflow: hidden; background: white;
-        }
-        .picker-wheel {
-            height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
-            padding: 80px 0;
-        }
+        .picker-wheel-container { height: 200px; position: relative; overflow: hidden; background: white; cursor: grab; }
+        .picker-wheel-container:active { cursor: grabbing; }
+        .picker-wheel { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; padding: 80px 0; }
         .picker-wheel::-webkit-scrollbar { display: none; }
-        
         .picker-item {
             height: 40px; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; font-weight: bold; color: #a0aec0;
-            scroll-snap-align: center; transition: 0.2s;
+            font-size: 20px; font-weight: bold; color: #a0aec0; scroll-snap-align: center; transition: 0.2s;
         }
         .picker-highlight {
             position: absolute; top: 80px; left: 0; right: 0; height: 40px;
@@ -148,11 +149,11 @@
             pointer-events: none; background: rgba(49, 130, 206, 0.05);
         }
 
-        /* Order Buttons */
+        /* Controls */
         .mtp-btn {
             width: 100%; padding: 12px; border-radius: 8px; border: none; color: white;
             text-align: left; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative; overflow: hidden; transition: transform 0.1s;
+            position: relative; overflow: hidden; transition: transform 0.1s; cursor: pointer;
         }
         .mtp-btn:active { transform: scale(0.98); }
         .mtp-btn-1 { background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%); }
@@ -160,73 +161,74 @@
         .mtp-head { font-size: 16px; font-weight: 900; display: block; margin-bottom: 2px; }
         .mtp-sub { font-size: 11px; opacity: 0.9; }
 
-        /* Doc Grid */
         .doc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
         .doc-btn {
             padding: 8px 2px; border: 1px solid #cbd5e0; border-radius: 6px; background: white;
             font-size: 11px; font-weight: bold; color: #4a5568; text-align: center;
             min-height: 44px; display: flex; align-items: center; justify-content: center;
-            flex-direction: column; line-height: 1.2; transition: 0.1s;
+            flex-direction: column; line-height: 1.2; transition: 0.1s; cursor: pointer;
         }
         .doc-btn:active { background: #ebf8ff; }
-        .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         
+        .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .bg-warn { background: #c05621 !important; }
         .bg-blood { background: #805ad5 !important; }
         .bg-med { background: #319795 !important; }
         .bg-ce { background: #d69e2e !important; }
+        .bg-selected-blood { background: #38a169 !important; color: white !important; border-color: #2f855a !important; }
 
-        /* Box Cards */
         .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border-left: 4px solid #cbd5e0; }
         .box-card.active { border-left-color: #3182ce; background: #f7fcff; }
-        .box-header { 
-            padding: 8px 10px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #edf2f7; 
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .box-header { padding: 8px 10px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center; }
         .box-title { font-weight: bold; font-size: 14px; color: #2d3748; }
-        .item-row { 
-            display: grid; grid-template-columns: 3fr 2fr 2fr; gap: 5px; 
-            padding: 8px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; font-size: 12px;
-        }
+        .item-row { display: grid; grid-template-columns: 3fr 2fr 2fr; gap: 5px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; font-size: 12px; }
         .st-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; text-align: center; background: #edf2f7; color: #718096; white-space: nowrap; }
         
-        /* Status Colors */
         .st-preparing { background: #feebc8; color: #c05621; }
         .st-shipped { background: #bee3f8; color: #2b6cb0; }
         .st-arrived { background: #c6f6d5; color: #2f855a; }
         .st-infusing { background: #2b6cb0; color: white; animation: pulse 1.5s infinite; }
         .st-completed { background: #2d3748; color: white; }
 
-        /* Utils */
         .btn { padding: 6px 12px; border-radius: 4px; border: none; font-weight: bold; font-size: 12px; color: white; cursor: pointer; }
         .btn-sm { padding: 4px 8px; font-size: 10px; }
         .btn-primary { background: #3182ce; } .btn-danger { background: #e53e3e; }
         .btn-success { background: #38a169; } .btn-warn { background: #dd6b20; }
         .btn-outline { background: transparent; border: 1px solid #cbd5e0; color: #4a5568; }
 
-        /* Log & Chat */
         .log-container { display: flex; flex-direction: column; gap: 6px; padding-bottom: 60px; }
         .log-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid #eee; }
         .log-time { color: #a0aec0; font-size: 10px; margin-right: 4px; }
         
-        #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; max-width:480px; margin:0 auto; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); right:0; }
         
         /* Modal - Z-INDEX 2000 */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
-        .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 480px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; max-height: 90vh; overflow-y: auto; }
         .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
         .role-btn { 
             border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; 
-            font-size: 12px; font-weight: bold; color: #4a5568; display: flex; flex-direction: column; gap: 4px;
+            font-size: 12px; font-weight: bold; color: #4a5568; display: flex; flex-direction: column; gap: 4px; 
+            cursor: pointer;
         }
         .role-btn:active { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; }
 
-        /* Blood Big Display */
+        /* Session Item Styles */
+        .session-item {
+            background: #fff; border: 1px solid #cbd5e0; padding: 10px; border-radius: 8px; 
+            display: flex; justify-content: space-between; align-items: center; position: relative; cursor: pointer;
+        }
+        .delete-icon-btn {
+            position: absolute; top: -5px; left: -5px; width: 24px; height: 24px;
+            background: #fff; border: 1px solid #e53e3e; color: #e53e3e; border-radius: 50%;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
         .blood-big { background: #e53e3e; color: white; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .blood-big.show { display: block; animation: fadeIn 0.5s; }
 
-        /* Full Screen Popup */
         .blood-popup { display: none; position: fixed; inset: 0; background: rgba(229, 62, 62, 0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; color: white; animation: flashIn 0.3s; pointer-events: none; }
         .blood-popup h1 { font-size: 24px; margin-bottom: 10px; letter-spacing: 2px; border-bottom: 2px solid white; padding-bottom: 5px; }
         .blood-popup div { font-size: 60px; font-weight: 800; text-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -248,8 +250,7 @@
             </div>
             <div class="picker-wheel-container">
                 <div class="picker-highlight"></div>
-                <div class="picker-wheel" id="pickerWheel">
-                </div>
+                <div class="picker-wheel" id="pickerWheel"></div>
             </div>
         </div>
     </div>
@@ -266,17 +267,15 @@
             
             <div id="stepRole">
                 <div class="role-grid">
-                    <div class="role-btn" onclick="selectRole('データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;">
-                        <span style="font-size:20px;">📊</span>システム管理者<br><span style="font-size:10px;">(認証あり・データDL)</span>
-                    </div>
-                    <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
                     <div class="role-btn" onclick="selectRole('チームリーダー')"><span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span></div>
                     <div class="role-btn" onclick="selectRole('輸血責任者')"><span style="font-size:20px;">📋</span>輸血責任者<br><span style="font-size:10px;">医師</span></div>
-                    <div class="role-btn" onclick="selectRole('手技医師')"><span style="font-size:20px;">💉</span>手技医師</div>
                     <div class="role-btn" onclick="selectRole('記録Ns')"><span style="font-size:20px;">📝</span>記録Ns</div>
                     <div class="role-btn" onclick="selectRole('介助Ns')"><span style="font-size:20px;">💊</span>介助Ns</div>
+                    <div class="role-btn" onclick="selectRole('研修医')"><span style="font-size:20px;">💉</span>研修医</div>
                     <div class="role-btn" onclick="selectRole('MTP搬送者')"><span style="font-size:20px;">🏃</span>MTP搬送者</div>
                     <div class="role-btn" onclick="selectRole('臨床工学技師')"><span style="font-size:20px;">⚙️</span>臨床工学技師</div>
+                    <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
+                    <div class="role-btn" onclick="selectRole('研究データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;"><span style="font-size:20px;">📊</span>研究データ管理者<br><span style="font-size:10px;">データ確認</span></div>
                 </div>
             </div>
 
@@ -319,11 +318,14 @@
                 <span style="font-size:16px; font-weight:bold;">ID: <span id="hdPid">---</span></span>
                 <span id="hdRole" class="role-pill">Guest</span>
             </div>
-            <div id="hdStatus" class="status-badge st-standby">待機中</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <div id="hdStatus" class="status-badge st-standby">待機中</div>
+                <button class="btn btn-sm btn-outline" style="color:white; border-color:white; font-size:10px; padding:4px 8px;" onclick="exitSession()">退出</button>
+            </div>
         </div>
         
         <div class="stats-bar">
-            <div class="stat-group" style="border-right:1px solid #4a5568;">
+            <div class="stat-group" style="border-right:1px solid #e2e8f0;">
                 <span class="stat-label">📍 現場在庫 (未投与)</span>
                 <div class="stat-vals">
                     <span class="c-red">R<span id="sRBC">0</span></span>
@@ -371,11 +373,13 @@
                     <span class="mtp-sub">BOX2(同型) + BOX3(PC含) を追加</span>
                 </button>
 
-                <div class="section-title">🚨 宣言・指示</div>
-                <div class="doc-grid">
-                    <div class="doc-btn" id="btnWarn" onclick="toggleFlag('warn', '異型輸血宣言', 'bg-warn')">⚠️ 異型輸血<br>宣言</div>
-                    <div class="doc-btn" id="btnBlood" onclick="toggleFlag('blood', '採血2回済', 'bg-blood')">💉 採血<br>2回済</div>
-                    <div class="doc-btn" style="border-color:#e53e3e; color:#e53e3e;" onclick="endMTP()">🏁 MTP<br>終了宣言</div>
+                <div id="declarationsBlock">
+                    <div class="section-title">🚨 宣言・指示</div>
+                    <div class="doc-grid">
+                        <div class="doc-btn" id="btnWarn" onclick="toggleFlag('warn', '異型輸血宣言', 'bg-warn')">⚠️ 異型輸血<br>宣言</div>
+                        <div class="doc-btn" id="btnBlood" onclick="toggleFlag('blood', '採血2回済', 'bg-blood')">💉 採血<br>2回済</div>
+                        <div class="doc-btn" style="border-color:#e53e3e; color:#e53e3e;" onclick="endMTP()">🏁 MTP<br>終了宣言</div>
+                    </div>
                 </div>
 
                 <div class="section-title">💊 薬剤投与</div>
@@ -407,8 +411,10 @@
                 </div>
                 <div style="background:white; padding:8px; border:1px solid #cbd5e0; border-radius:6px; font-size:11px;">
                     <strong>不規則抗体:</strong>
-                    <button class="btn btn-sm btn-success" id="btnIrregNeg" onclick="setIrreg('neg')">なし</button>
-                    <button class="btn btn-sm btn-danger" id="btnIrregPos" onclick="setIrreg('pos')">あり</button>
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <button class="btn btn-sm btn-outline" id="btnIrregNeg" style="flex:1;" onclick="setIrreg('neg')">なし</button>
+                        <button class="btn btn-sm btn-outline" id="btnIrregPos" style="flex:1;" onclick="setIrreg('pos')">あり</button>
+                    </div>
                 </div>
             </div>
 
@@ -472,7 +478,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // ★追加: 認証初期化
+        // ★追加: 認証機能の初期化
         const auth = firebase.auth();
 
         // ★追加: 匿名ログインを自動実行
@@ -482,7 +488,8 @@
             })
             .catch((error) => {
                 console.error("System: Login failed", error);
-                alert("認証エラーが発生しました。");
+                // コンソールでのON設定を忘れている場合に気づけるようアラートを出す
+                alert("認証エラー詳細:\n" + error.code + "\n" + error.message);
             });
 
         // =================================================================
@@ -493,18 +500,17 @@
         let currentSessionData = null;
         let hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}};
         let lastBloodState = "";
+        let bloodPopupShown = false; 
         let unsubscribeInventory = null;
         let unsubscribeSession = null;
-
-        // Picker State
-        let pickerTarget = null; // {prod, type}
+        let pickerTarget = null; 
         let pickerValue = 0;
 
         const ROLES = {
             MANAGER: ['研究データ管理者'],
             ADMIN: ['輸血検査部'],
             LEADER: ['チームリーダー'],
-            DOCTOR: ['チームリーダー', '手技医師', '輸血責任者'],
+            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'],
             NURSE: ['記録Ns', '介助Ns'],
             CE: ['臨床工学技師'],
             TRANS: ['MTP搬送者', '臨床工学技師']
@@ -512,7 +518,7 @@
 
         const CANNED = {
             DOCTOR: ['開腹術開始', 'IVR開始', 'バイタル不安定', 'REBOA挿入', '止血確認'],
-            ADMIN: ['異型対応', '同型未クロス', '在庫確認中', '出庫完了'],
+            ADMIN: ['異型で出庫', '同型未クロスで出庫', '以後クロスマッチ済み', '同型血在庫が切れます'],
             NURSE: ['到着', '投与開始', '急速輸血中', '血型提出済'],
             TRANS: ['到着', '次のオーダー依頼', '了解']
         };
@@ -520,16 +526,23 @@
         // =================================================================
         // UI & NAVIGATION
         // =================================================================
+        function generateAutoId() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = (now.getMonth()+1).toString().padStart(2, '0');
+            const d = now.getDate().toString().padStart(2, '0');
+            const h = now.getHours().toString().padStart(2, '0');
+            const min = now.getMinutes().toString().padStart(2, '0');
+            return `${y}${m}${d}${h}${min}`;
+        }
+
         function selectRole(role) {
-            // --- 追加: 管理者ログイン認証 ---
             if (ROLES.MANAGER.includes(role)) {
                 const id = prompt("管理者IDを入力してください");
                 if (id !== "185383") return alert("IDが正しくありません");
-                
                 const pw = prompt("パスワードを入力してください");
                 if (pw !== "Love99mtp") return alert("パスワードが正しくありません");
             }
-            // -----------------------------
 
             myRole = role;
             document.getElementById('hdRole').textContent = role;
@@ -538,21 +551,23 @@
 
             const isManager = ROLES.MANAGER.includes(role);
             const isAdmin = ROLES.ADMIN.includes(role);
+            
+            if(!isManager) {
+                document.getElementById('newPid').value = generateAutoId();
+            }
 
-            // Research Manager
             if(isManager) {
                 document.getElementById('researchPanel').classList.remove('hidden');
                 document.getElementById('sessionList').classList.add('hidden');
                 document.getElementById('newSessionBlock').classList.add('hidden');
                 document.getElementById('sessionTitle').textContent = "管理者メニュー";
-                return; // Early return for Manager
+                return; 
             } else {
                 document.getElementById('researchPanel').classList.add('hidden');
                 document.getElementById('sessionList').classList.remove('hidden');
                 document.getElementById('newSessionBlock').classList.remove('hidden');
             }
 
-            // Inventory Admin
             if(isAdmin) {
                 document.getElementById('adminStockPanel').classList.remove('hidden');
                 document.getElementById('sessionTitle').textContent = "在庫管理 / 症例選択";
@@ -575,6 +590,27 @@
             if(unsubscribeInventory) unsubscribeInventory();
         }
 
+        function exitSession() {
+            if(!currentSessionId) return;
+            // Clean
+            currentSessionId = null;
+            currentSessionData = null;
+            bloodPopupShown = false;
+            lastBloodState = "";
+            document.getElementById('bloodBigText').textContent = "";
+            document.getElementById('bloodBig').classList.remove('show');
+            document.querySelectorAll('.bg-selected-blood').forEach(el => el.classList.remove('bg-selected-blood'));
+            
+            document.getElementById('newPid').value = generateAutoId();
+
+            if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession=null; }
+            document.getElementById('loginModal').classList.add('active');
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
+            document.getElementById('tabAction').classList.add('active-view');
+            document.getElementById('stepSession').classList.remove('hidden');
+            document.getElementById('stepRole').classList.add('hidden');
+        }
+
         function changeTab(tabId, navEl) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
             document.getElementById(tabId).classList.add('active-view');
@@ -590,14 +626,26 @@
             }
         }
 
+        // =================================================================
+        // UI HELPERS (MOUSE/TOUCH)
+        // =================================================================
         let touchStartX = 0;
+        let isMouseDown = false;
         const viewport = document.getElementById('mainViewport');
+        
         viewport.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
-        viewport.addEventListener('touchend', e => {
-            const touchEndX = e.changedTouches[0].screenX;
-            if (touchEndX < touchStartX - 50) nextTab();
-            if (touchEndX > touchStartX + 50) prevTab();
-        });
+        viewport.addEventListener('touchend', e => { handleSwipe(touchStartX, e.changedTouches[0].screenX); });
+        
+        // PC Mouse Swipe
+        viewport.addEventListener('mousedown', e => { touchStartX = e.screenX; isMouseDown = true; });
+        viewport.addEventListener('mouseup', e => { if(isMouseDown) handleSwipe(touchStartX, e.screenX); isMouseDown = false; });
+        viewport.addEventListener('mouseleave', () => isMouseDown = false);
+
+        function handleSwipe(start, end) {
+            if (end < start - 50) nextTab();
+            if (end > start + 50) prevTab();
+        }
+
         function nextTab() {
             const current = document.querySelector('.nav-item.active');
             if(current && current.nextElementSibling) current.nextElementSibling.click();
@@ -606,6 +654,28 @@
             const current = document.querySelector('.nav-item.active');
             if(current && current.previousElementSibling) current.previousElementSibling.click();
         }
+
+        // PC Mouse Drag for Picker
+        const wheel = document.getElementById('pickerWheel');
+        let isWheelDown = false;
+        let wheelStartY;
+        let wheelStartScroll;
+
+        wheel.addEventListener('mousedown', (e) => {
+            isWheelDown = true;
+            wheelStartY = e.pageY;
+            wheelStartScroll = wheel.scrollTop;
+        });
+        wheel.addEventListener('mousemove', (e) => {
+            if(!isWheelDown) return;
+            e.preventDefault();
+            const y = e.pageY;
+            const walk = (y - wheelStartY) * 1.5; 
+            wheel.scrollTop = wheelStartScroll - walk;
+        });
+        wheel.addEventListener('mouseup', () => isWheelDown = false);
+        wheel.addEventListener('mouseleave', () => isWheelDown = false);
+
 
         // =================================================================
         // INVENTORY LOGIC (DRUM PICKER)
@@ -697,25 +767,25 @@
         // =================================================================
         function loadActiveSessions() {
             const list = document.getElementById('sessionList');
-            // Load ALL sessions
             db.collection("mtp_sessions").orderBy("start_time", "desc").limit(20).onSnapshot(snap => {
                 if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:20px; color:#a0aec0;'>なし</div>"; return; }
                 list.innerHTML = snap.docs.map(doc => {
                     const d = doc.data();
                     const isCompleted = d.status === 'completed';
-                    const delBtn = ROLES.LEADER.includes(myRole) ? `<button class="btn btn-sm btn-outline" style="color:#e53e3e; border-color:#e53e3e;" onclick="deleteSession('${doc.id}', event)">削除</button>` : '';
+                    const delBtn = ROLES.LEADER.includes(myRole) ? `<div class="delete-icon-btn" onclick="deleteSession('${doc.id}', event)">🗑️</div>` : '';
                     
                     const statusText = isCompleted ? "【完了】履歴" : "進行中";
                     const statusStyle = isCompleted ? "color:#718096; background:#edf2f7;" : "color:#3182ce; background:#ebf8ff;";
                     const btnText = isCompleted ? "参照" : "参加";
                     
                     return `
-                    <div class="session-item" style="background:#fff; border:1px solid #cbd5e0; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="joinSession('${doc.id}')">
+                    <div class="session-item" onclick="joinSession('${doc.id}')">
+                        ${delBtn}
                         <div>
                             <div style="font-weight:bold; font-size:16px;">${d.id} <span style="font-size:10px; padding:2px 4px; border-radius:4px; ${statusStyle}">${statusText}</span></div>
                             <div style="font-size:11px; color:#718096;">${d.location} (${d.start_time})</div>
                         </div>
-                        <div style="display:flex; gap:5px;">${delBtn}<button class="btn btn-sm btn-primary">${btnText}</button></div>
+                        <button class="btn btn-sm btn-primary">${btnText}</button>
                     </div>`;
                 }).join("");
             });
@@ -730,17 +800,22 @@
                 start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
                 boxes: [], logs: [], chats: [],
                 used: {RBC:0, FFP:0, PC:0},
-                blood_res: {abo:'', rh:'', irreg:'neg'},
+                blood_res: {abo:'', rh:'', irreg:''}, 
                 flags: {}, meds: {}
             }).then(() => joinSession(pid));
         }
 
         function deleteSession(id, e) {
             e.stopPropagation();
-            if(confirm("本当に削除しますか？復元できません。")) db.collection("mtp_sessions").doc(id).delete();
+            if(confirm("【警告】本当に削除しますか？\nデータは復元できません。")) db.collection("mtp_sessions").doc(id).delete();
         }
 
         function joinSession(id) {
+            // Clean
+            lastBloodState = "";
+            bloodPopupShown = false; 
+            document.querySelectorAll('.bg-selected-blood').forEach(el=>el.classList.remove('bg-selected-blood'));
+
             currentSessionId = id;
             document.getElementById('hdPid').textContent = id;
             document.getElementById('loginModal').classList.remove('active');
@@ -748,24 +823,33 @@
             const isDoc = ROLES.DOCTOR.includes(myRole);
             const isCE = ROLES.CE.includes(myRole);
             const isAdmin = ROLES.ADMIN.includes(myRole);
+            const isResident = (myRole === '研修医');
 
             if(!isDoc) document.getElementById('panelDoctor').classList.add('hidden');
             if(isCE) document.getElementById('panelCE').classList.remove('hidden');
             if(isAdmin) document.getElementById('panelLab').classList.remove('hidden');
 
+            if(isResident) {
+                document.getElementById('declarationsBlock').style.display = 'none';
+                document.getElementById('btnComplete').style.display = 'none';
+            } else {
+                document.getElementById('declarationsBlock').style.display = 'block';
+                document.getElementById('btnComplete').style.display = 'block';
+            }
+
             unsubscribeSession = db.collection("mtp_sessions").doc(id).onSnapshot(doc => {
-                if(!doc.exists) { alert("症例が削除されました"); location.reload(); return; }
+                if(!doc.exists) { alert("症例が削除されました"); exitSession(); return; }
                 currentSessionData = doc.data();
                 renderScreen(currentSessionData);
             });
         }
 
         // =================================================================
-        // RENDERING & ACTIONS
+        // RENDERING
         // =================================================================
         function renderScreen(data) {
             const isReadOnly = data.status === 'completed';
-            // Set Read Only Overlay
+            
             if(isReadOnly) {
                 document.getElementById('tabAction').classList.add('read-only-overlay');
                 document.getElementById('tabInventory').classList.add('read-only-overlay');
@@ -777,7 +861,7 @@
                 document.getElementById('tabAction').classList.remove('read-only-overlay');
                 document.getElementById('tabInventory').classList.remove('read-only-overlay');
                 if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display = 'block';
-                document.getElementById('btnComplete').style.display = 'block';
+                if(myRole !== '研修医') document.getElementById('btnComplete').style.display = 'block';
                 const sb = document.getElementById('hdStatus');
                 sb.className = `status-badge st-${data.status}`;
                 sb.textContent = data.status==='active' ? '発動中' : '終了';
@@ -802,20 +886,47 @@
             document.getElementById('sPC').textContent = s.PC;
 
             // Blood Popup Logic
-            const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
-            if(lastBloodState !== "" && lastBloodState !== currentBlood && data.blood_res.abo) {
-                document.getElementById('bloodPopupText').textContent = currentBlood;
-                const pop = document.getElementById('bloodPopup');
-                pop.classList.remove('active');
-                void pop.offsetWidth; // trigger reflow
-                pop.classList.add('active');
-                setTimeout(()=>pop.classList.remove('active'), 3000);
-            }
-            lastBloodState = currentBlood;
-            const bb = document.getElementById('bloodBig');
-            if(data.blood_res && data.blood_res.abo) {
+            if(data.blood_res.abo && data.blood_res.rh) {
+                const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
+                if(lastBloodState !== "" && lastBloodState !== currentBlood && !bloodPopupShown) {
+                    document.getElementById('bloodPopupText').textContent = currentBlood;
+                    const pop = document.getElementById('bloodPopup');
+                    pop.classList.remove('active');
+                    void pop.offsetWidth; 
+                    pop.classList.add('active');
+                    playBeep(); // BEEP SOUND
+                    setTimeout(()=>pop.classList.remove('active'), 3000);
+                    bloodPopupShown = true;
+                }
+                if(lastBloodState === "") lastBloodState = currentBlood;
+                
+                const bb = document.getElementById('bloodBig');
                 bb.classList.add('show');
                 document.getElementById('bloodBigText').textContent = currentBlood;
+            }
+
+            // Green Selection Logic
+            ['btnA','btnB','btnO','btnAB','btnRhP','btnRhM'].forEach(id => {
+                const b = document.getElementById(id);
+                if(b) b.classList.remove('bg-selected-blood');
+            });
+            if(data.blood_res.abo) {
+                document.getElementById('btn'+data.blood_res.abo).classList.add('bg-selected-blood');
+            }
+            if(data.blood_res.rh) {
+                const rid = data.blood_res.rh==='+' ? 'btnRhP' : 'btnRhM';
+                document.getElementById(rid).classList.add('bg-selected-blood');
+            }
+
+            // Irregular Antibody Styles
+            const btnNeg = document.getElementById('btnIrregNeg');
+            const btnPos = document.getElementById('btnIrregPos');
+            btnNeg.className = "btn btn-sm btn-outline"; 
+            btnPos.className = "btn btn-sm btn-outline";
+            if(data.blood_res.irreg === 'neg') {
+                btnNeg.className = "btn btn-sm btn-success"; 
+            } else if(data.blood_res.irreg === 'pos') {
+                btnPos.className = "btn btn-sm btn-danger";
             }
 
             const bc = document.getElementById('boxesContainer');
@@ -848,9 +959,13 @@
                             else if(i.status==='infusing') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
                         }
                     }
+                    // Auto-Numbering Display (v37.0)
+                    let tagHtml = "";
+                    if(i.tag) tagHtml = `<span style="font-weight:bold; color:#e53e3e; font-size:14px; margin-left:5px;">${i.tag}</span>`;
+
                     return `
                     <div class="item-row">
-                        <div>${i.type} (${i.units}U)</div>
+                        <div>${i.type} (${i.units}U)${tagHtml}</div>
                         <div class="st-badge st-${i.status}">${i.status}</div>
                         <div style="text-align:right;">${btn}</div>
                     </div>`;
@@ -891,14 +1006,11 @@
             else { el.classList.remove('active-on', bgClass); }
         }
 
-        // --- Logic ---
+        // ... (Logic functions similar to v35.1) ...
         function orderMTP(type) {
-            if (type === 2) {
-                if (!currentSessionData.blood_res || !currentSessionData.blood_res.abo) {
-                    return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
-                }
+            if (type === 2 && (!currentSessionData.blood_res || !currentSessionData.blood_res.abo)) {
+                return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
             }
-
             const currentBoxes = currentSessionData.boxes || [];
             let newBoxes = [];
             let logMsg = "";
@@ -922,17 +1034,14 @@
                     {type:abo+'_FFP', units:2, status:'pending'}, {type:abo+'_FFP', units:2, status:'pending'}
                 ];
                 newBoxes.push({ name: name2, items: items2 });
-
                 const name3 = `BOX3-${count3} (PC含)`;
                 const items3 = [
-                    {type:abo+'_RBC', units:2, status:'pending'}, 
-                    {type:abo+'_FFP', units:2, status:'pending'},
+                    {type:abo+'_RBC', units:2, status:'pending'}, {type:abo+'_FFP', units:2, status:'pending'},
                     {type:abo+'_PC', units:10, status:'pending'}, {type:abo+'_PC', units:10, status:'pending'}
                 ];
                 newBoxes.push({ name: name3, items: items3 });
                 logMsg = `📦 オーダー② (${name2} + ${name3}) 指示`;
             }
-            
             db.collection("mtp_sessions").doc(currentSessionId).update({
                 boxes: firebase.firestore.FieldValue.arrayUnion(...newBoxes),
                 logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:logMsg})
@@ -945,12 +1054,32 @@
                 const doc = await t.get(ref);
                 const d = doc.data();
                 const item = d.boxes[bIdx].items[iIdx];
-                
                 if(nextSt === 'shipped' && item.status !== 'shipped') {
                     let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
                     let ty = item.type.split('_')[0] || 'O';
+                    if(hospitalStock[p][ty] < item.units) { alert(`⚠️ 在庫不足！\n${p}(${ty}型)不足`); return; }
                     db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
                 }
+                
+                // Auto Numbering on Start (v37.0)
+                if(nextSt === 'infusing' && item.status !== 'infusing') {
+                    const prodType = item.type.includes('RBC') ? 'RBC' : (item.type.includes('FFP') ? 'FFP' : 'PC');
+                    let count = 0;
+                    d.boxes.forEach(box => {
+                        box.items.forEach(i => {
+                            const iType = i.type.includes('RBC') ? 'RBC' : (i.type.includes('FFP') ? 'FFP' : 'PC');
+                            if (iType === prodType && (i.status === 'infusing' || i.status === 'completed')) {
+                                count++;
+                            }
+                        });
+                    });
+                    const circleNum = (n) => {
+                        const circleMap = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
+                        return circleMap[n-1] || `(${n})`;
+                    };
+                    item.tag = circleNum(count + 1);
+                }
+
                 if(nextSt === 'completed') {
                     let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
                     t.update(ref, { [`used.${p}`]: firebase.firestore.FieldValue.increment(item.units) });
@@ -968,7 +1097,20 @@
                 const d = doc.data();
                 const box = d.boxes[bIdx];
                 let count = 0;
-                
+                if(nextSt === 'shipped') {
+                    let required = {};
+                    box.items.forEach(i => {
+                        if(i.status === 'preparing') {
+                            let p = i.type.includes('RBC')?'RBC':i.type.includes('FFP')?'FFP':'PC';
+                            let ty = i.type.split('_')[0] || 'O';
+                            required[`${p}_${ty}`] = (required[`${p}_${ty}`] || 0) + i.units;
+                        }
+                    });
+                    for(let k in required) {
+                        let [p, ty] = k.split('_');
+                        if(hospitalStock[p][ty] < required[k]) { alert(`⚠️ 在庫不足！ ${p}(${ty}型)`); return; }
+                    }
+                }
                 box.items.forEach(i => {
                     let doUp = false;
                     if(nextSt==='preparing' && i.status==='pending') doUp=true;
@@ -979,132 +1121,104 @@
                         doUp=true;
                     }
                     if(nextSt==='arrived' && i.status==='shipped') doUp=true;
-
                     if(doUp) { i.status = nextSt; count++; }
                 });
-                if(count>0) {
-                    t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${box.name} 一括${nextSt} (${count})`}) });
-                }
+                if(count>0) { t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${box.name} 一括${nextSt} (${count})`}) }); }
             });
         }
 
         function toggleFlag(k, msg, bgClass) {
             const v = !currentSessionData.flags?.[k];
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                [`flags.${k}`]: v,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${msg} ${v?'ON':'OFF'}`})
-            });
+            db.collection("mtp_sessions").doc(currentSessionId).update({ [`flags.${k}`]: v, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${msg} ${v?'ON':'OFF'}`}) });
         }
         function toggleMed(k, msg) {
             const v = !currentSessionData.meds?.[k];
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                [`meds.${k}`]: v,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`投与指示: ${msg} ${v?'ON':'OFF'}`})
-            });
+            db.collection("mtp_sessions").doc(currentSessionId).update({ [`meds.${k}`]: v, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`投与指示: ${msg} ${v?'ON':'OFF'}`}) });
         }
         
-        function setBlood(val) {
-            if(!ROLES.ADMIN.includes(myRole)) return;
-            if(currentSessionData.blood_res.abo !== val) {
-                db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.abo': val });
-            }
+        // --- v39.1: Auto Log for Lab Actions ---
+        function setBlood(val) { 
+            if(!ROLES.ADMIN.includes(myRole)) return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 
+                'blood_res.abo': val,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`血液型確定: ${val}型`})
+            }); 
         }
-        function setRh(val) {
-            if(!ROLES.ADMIN.includes(myRole)) return;
-            const v = val==='+'?'+':'-';
-            if(currentSessionData.blood_res.rh !== v) {
-                db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.rh': v });
-            }
+        function setRh(val) { 
+            if(!ROLES.ADMIN.includes(myRole)) return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 
+                'blood_res.rh': val,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`Rh確定: Rh(${val})`})
+            }); 
         }
-        function setIrreg(val) {
-            if(!ROLES.ADMIN.includes(myRole)) return;
-            db.collection("mtp_sessions").doc(currentSessionId).update({ 'blood_res.irreg': val });
+        function setIrreg(val) { 
+            if(!ROLES.ADMIN.includes(myRole)) return; 
+            const msg = val==='pos' ? 'あり' : 'なし';
+            db.collection("mtp_sessions").doc(currentSessionId).update({ 
+                'blood_res.irreg': val,
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`不規則抗体: ${msg}`})
+            }); 
         }
 
-        function endMTP() {
-            if(confirm("終了宣言しますか？")) {
-                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'ended' });
-            }
-        }
-        
-        // --- COMPLETION & RESEARCH LOGGING ---
+        function endMTP() { if(confirm("終了宣言しますか？")) { db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'ended' }); } }
         function moveToWard() {
-            if(confirm("病棟入室として症例を完結しますか？\n（データは研究用DBに自動保存されます）")) {
-                const now = new Date();
-                const d = currentSessionData;
-                
-                // Calc Params
+            if(confirm("完結しますか？（研究用DBに保存されます）")) {
+                const d = currentSessionData; const now = new Date();
                 const findTime = (key) => { const f = d.logs.find(l=>l.m.includes(key)); return f?f.t:""; };
-                const extractedData = {
-                    id: d.id,
-                    location: d.location,
-                    date: now.toLocaleDateString(),
-                    startTime: d.start_time,
-                    endTime: now.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
-                    totalRBC: d.used.RBC,
-                    totalFFP: d.used.FFP,
-                    totalPC: d.used.PC,
-                    bloodType: `${d.blood_res.abo} ${d.blood_res.rh}`,
-                    firstOrder: findTime("オーダー"),
-                    firstShip: findTime("出庫"),
-                    firstArrive: findTime("到着")
-                };
-                // 1. Save to Research DB
-                db.collection("research_logs").doc(d.id).set(extractedData);
-                // 2. Mark session as completed
-                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'completed' })
-                .then(() => {
-                    alert("完了しました。データは保存されました。");
-                    location.reload();
+                db.collection("research_logs").doc(d.id).set({
+                    id: d.id, location: d.location, date: now.toLocaleDateString(), startTime: d.start_time, endTime: now.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
+                    totalRBC: d.used.RBC, totalFFP: d.used.FFP, totalPC: d.used.PC, bloodType: `${d.blood_res.abo} ${d.blood_res.rh}`,
+                    firstOrder: findTime("オーダー"), firstShip: findTime("出庫"), firstArrive: findTime("到着")
                 });
+                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'completed' }).then(() => { alert("完了しました"); location.reload(); });
             }
         }
 
-        // --- ADMIN DOWNLOAD ---
         function downloadAllResearchData() {
             db.collection("research_logs").get().then(snap => {
-                if(snap.empty) { alert("データがありません"); return; }
-                
+                if(snap.empty) { alert("データなし"); return; }
                 let csv = "ID,Location,Date,Start,End,RBC,FFP,PC,BloodType,FirstOrder,FirstShip,FirstArrive\n";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    csv += `${d.id},${d.location},${d.date},${d.startTime},${d.endTime},${d.totalRBC},${d.totalFFP},${d.totalPC},${d.bloodType},${d.firstOrder},${d.firstShip},${d.firstArrive}\n`;
-                });
-                
+                snap.forEach(doc => { const d = doc.data(); csv += `${d.id},${d.location},${d.date},${d.startTime},${d.endTime},${d.totalRBC},${d.totalFFP},${d.totalPC},${d.bloodType},${d.firstOrder},${d.firstShip},${d.firstArrive}\n`; });
                 const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `MTP_Research_Data_${new Date().toLocaleDateString()}.csv`;
-                a.click();
+                const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `MTP_Research_${new Date().toLocaleDateString()}.csv`; a.click();
             });
         }
 
         function sendChat() {
-            const t = document.getElementById('chatInput').value;
-            if(!t) return;
-            db.collection("mtp_sessions").doc(currentSessionId).update({
-                chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:t})
-            });
+            const t = document.getElementById('chatInput').value; if(!t) return;
+            db.collection("mtp_sessions").doc(currentSessionId).update({ chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:t}) });
             document.getElementById('chatInput').value = "";
         }
-        
         function renderCanned() {
             let list = CANNED.DOCTOR;
             if(ROLES.ADMIN.includes(myRole)) list = CANNED.ADMIN;
             if(ROLES.NURSE.includes(myRole)) list = CANNED.NURSE;
             if(ROLES.TRANS.includes(myRole)) list = CANNED.TRANS;
-            document.getElementById('cannedArea').innerHTML = list.map(c => 
-                `<div class="canned-btn" onclick="document.getElementById('chatInput').value='${c}';sendChat()">${c}</div>`
-            ).join("");
+            document.getElementById('cannedArea').innerHTML = list.map(c => `<div class="canned-btn" onclick="document.getElementById('chatInput').value='${c}';sendChat()">${c}</div>`).join("");
         }
-
-        function copySummary() {
-            document.getElementById('summaryText').select();
-            document.execCommand('copy');
-            alert('コピーしました');
-        }
+        function copySummary() { document.getElementById('summaryText').select(); document.execCommand('copy'); alert('コピーしました'); }
         function getTime() { return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
+
+        // --- BEEP SOUND FUNCTION ---
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                // 3 short beeps
+                [0, 0.2, 0.4].forEach(t => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'square';
+                    osc.frequency.value = 880; // A5
+                    gain.gain.setValueAtTime(0.1, now + t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.1);
+                    osc.start(now + t);
+                    osc.stop(now + t + 0.1);
+                });
+            } catch(e) { console.error("Audio error:", e); }
+        }
     </script>
 </body>
 </html>
