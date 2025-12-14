@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v39.2 (12/14 22:30)</title>
+    <title>MTP Cloud Mobile v40.0 (Research Edition)</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -21,8 +21,6 @@
             overflow: hidden; 
             display: flex;
             flex-direction: column;
-            
-            /* PC View Optimization */
             max-width: 480px;
             margin: 0 auto;
             border-left: 1px solid #ccc;
@@ -32,7 +30,7 @@
         }
         input, textarea, select { user-select: text; }
 
-        /* --- Header (Fixed) --- */
+        /* --- Header --- */
         .app-header {
             background: #1a202c; color: white; padding: 8px 10px;
             padding-top: env(safe-area-inset-top, 10px);
@@ -40,7 +38,6 @@
         }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .role-pill { font-size: 10px; background: #4a5568; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
-        
         .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
         .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
         .st-standby { background: #718096; color: white; }
@@ -59,11 +56,8 @@
         .c-red { color: #e53e3e; } .c-yel { color: #d69e2e; } .c-blu { color: #3182ce; }
 
         /* --- Main Viewport --- */
-        .main-viewport {
-            flex: 1; position: relative; overflow: hidden; background: #f7fafc; cursor: grab;
-        }
+        .main-viewport { flex: 1; position: relative; overflow: hidden; background: #f7fafc; cursor: grab; }
         .main-viewport:active { cursor: grabbing; }
-        
         .tab-view {
             position: absolute; inset: 0; 
             overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -72,8 +66,6 @@
             display: none;
         }
         .tab-view.active-view { transform: translateX(0); display: block; }
-
-        /* Read Only Overlay */
         .read-only-overlay { position: relative; }
         .read-only-overlay::after {
             content: "参照モード (操作不可)";
@@ -104,11 +96,10 @@
             display: flex; align-items: center; justify-content: space-between;
         }
 
-        /* Inventory Table */
+        /* Inventory & Picker */
         .stock-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-bottom: 10px; }
         .stock-table th { color: #4a5568; padding: 2px; font-size: 10px; text-align: center; }
         .stock-table td { padding: 0 4px; }
-        
         .stock-display-btn {
             width: 100%; padding: 12px 0; text-align: center; 
             font-size: 18px; font-weight: bold; color: #2d3748; font-family: monospace;
@@ -118,18 +109,18 @@
         .stock-display-btn.editable { color: #3182ce; border-color: #3182ce; background: #ebf8ff; cursor: pointer; }
         .stock-display-btn:active.editable { background: #bee3f8; }
 
-        /* Picker Overlay */
-        #pickerModal {
+        /* Modal & Picker */
+        #pickerModal, #typeSwapModal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000;
             display: none; align-items: flex-end; opacity: 0; transition: opacity 0.2s;
         }
-        #pickerModal.show { display: flex; opacity: 1; }
+        #pickerModal.show, #typeSwapModal.show { display: flex; opacity: 1; }
         .picker-sheet {
             background: white; width: 100%; border-radius: 16px 16px 0 0;
             padding-bottom: env(safe-area-inset-bottom);
             transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
-        #pickerModal.show .picker-sheet { transform: translateY(0); }
+        #pickerModal.show .picker-sheet, #typeSwapModal.show .picker-sheet { transform: translateY(0); }
         .picker-toolbar {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 15px; border-bottom: 1px solid #edf2f7; background: #f7fafc; border-radius: 16px 16px 0 0;
@@ -149,7 +140,7 @@
             pointer-events: none; background: rgba(49, 130, 206, 0.05);
         }
 
-        /* Controls */
+        /* Buttons & Badges */
         .mtp-btn {
             width: 100%; padding: 12px; border-radius: 8px; border: none; color: white;
             text-align: left; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -169,7 +160,6 @@
             flex-direction: column; line-height: 1.2; transition: 0.1s; cursor: pointer;
         }
         .doc-btn:active { background: #ebf8ff; }
-        
         .doc-btn.active-on { color: white; border-color: transparent; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
         .bg-warn { background: #c05621 !important; }
         .bg-blood { background: #805ad5 !important; }
@@ -196,13 +186,13 @@
         .btn-success { background: #38a169; } .btn-warn { background: #dd6b20; }
         .btn-outline { background: transparent; border: 1px solid #cbd5e0; color: #4a5568; }
 
+        /* Log & Chat */
         .log-container { display: flex; flex-direction: column; gap: 6px; padding-bottom: 60px; }
         .log-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid #eee; }
         .log-time { color: #a0aec0; font-size: 10px; margin-right: 4px; }
-        
         #chatOverlay { position: fixed; bottom: 60px; left:0; width:100%; max-width:480px; margin:0 auto; background:white; border-top:1px solid #e2e8f0; padding:8px; z-index:90; display:none; padding-bottom: calc(8px + env(safe-area-inset-bottom)); right:0; }
-        
-        /* Modal - Z-INDEX 2000 */
+
+        /* General Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal.active { display: flex; }
         .modal-card { background: white; border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; max-height: 90vh; overflow-y: auto; }
@@ -213,22 +203,11 @@
             cursor: pointer;
         }
         .role-btn:active { background: #ebf8ff; border-color: #3182ce; color: #2b6cb0; }
-
-        /* Session Item Styles */
-        .session-item {
-            background: #fff; border: 1px solid #cbd5e0; padding: 10px; border-radius: 8px; 
-            display: flex; justify-content: space-between; align-items: center; position: relative; cursor: pointer;
-        }
-        .delete-icon-btn {
-            position: absolute; top: -5px; left: -5px; width: 24px; height: 24px;
-            background: #fff; border: 1px solid #e53e3e; color: #e53e3e; border-radius: 50%;
-            font-size: 10px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
+        .session-item { background: #fff; border: 1px solid #cbd5e0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; position: relative; cursor: pointer; }
+        .delete-icon-btn { position: absolute; top: -5px; left: -5px; width: 24px; height: 24px; background: #fff; border: 1px solid #e53e3e; color: #e53e3e; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 
         .blood-big { background: #e53e3e; color: white; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .blood-big.show { display: block; animation: fadeIn 0.5s; }
-
         .blood-popup { display: none; position: fixed; inset: 0; background: rgba(229, 62, 62, 0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; color: white; animation: flashIn 0.3s; pointer-events: none; }
         .blood-popup h1 { font-size: 24px; margin-bottom: 10px; letter-spacing: 2px; border-bottom: 2px solid white; padding-bottom: 5px; }
         .blood-popup div { font-size: 60px; font-weight: 800; text-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -245,12 +224,30 @@
     <div id="pickerModal">
         <div class="picker-sheet">
             <div class="picker-toolbar">
-                <div class="picker-title" id="pickerTitle">RBC (A型)</div>
+                <div class="picker-title" id="pickerTitle">数量変更</div>
                 <button class="btn btn-primary" onclick="confirmPicker()">完了</button>
             </div>
             <div class="picker-wheel-container">
                 <div class="picker-highlight"></div>
                 <div class="picker-wheel" id="pickerWheel"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="typeSwapModal">
+        <div class="picker-sheet">
+            <div class="picker-toolbar">
+                <div class="picker-title" style="color:#e53e3e;">⚠️ 代替血液型の選択</div>
+                <button class="btn btn-outline" onclick="closeTypeSwap()">キャンセル</button>
+            </div>
+            <div style="padding:20px; display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+                <button class="btn btn-outline" onclick="confirmTypeSwap('A')">A型</button>
+                <button class="btn btn-outline" onclick="confirmTypeSwap('B')">B型</button>
+                <button class="btn btn-outline" onclick="confirmTypeSwap('O')">O型</button>
+                <button class="btn btn-outline" onclick="confirmTypeSwap('AB')">AB型</button>
+            </div>
+            <div style="padding:0 15px 20px; font-size:11px; color:#718096; text-align:center;">
+                ※在庫マスターの整合性のため、実際に使用する型を選択してください。<br>「プロトコル逸脱」として記録されます。
             </div>
         </div>
     </div>
@@ -264,7 +261,6 @@
         <div class="modal-card">
             <h2 style="text-align:center; font-size:18px; margin-bottom:5px;">MTP Cloud</h2>
             <p style="text-align:center; font-size:11px; color:#718096;">役割を選択してください</p>
-            
             <div id="stepRole">
                 <div class="role-grid">
                     <div class="role-btn" onclick="selectRole('チームリーダー')"><span style="font-size:20px;">👨‍⚕️</span>チームリーダー<br><span style="font-size:10px;">医師</span></div>
@@ -274,27 +270,22 @@
                     <div class="role-btn" onclick="selectRole('研修医')"><span style="font-size:20px;">💉</span>研修医</div>
                     <div class="role-btn" onclick="selectRole('MTP搬送者')"><span style="font-size:20px;">🏃</span>MTP搬送者</div>
                     <div class="role-btn" onclick="selectRole('臨床工学技師')"><span style="font-size:20px;">⚙️</span>臨床工学技師</div>
-                    <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫管理</span></div>
-                    <div class="role-btn" onclick="selectRole('研究データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;"><span style="font-size:20px;">📊</span>研究データ管理者<br><span style="font-size:10px;">データ確認</span></div>
+                    <div class="role-btn" onclick="selectRole('輸血検査部')"><span style="font-size:20px;">🏥</span>輸血検査部<br><span style="font-size:10px;">在庫・置換</span></div>
+                    <div class="role-btn" onclick="selectRole('研究データ管理者')" style="grid-column: span 2; background:#ebf8ff; border-color:#3182ce;"><span style="font-size:20px;">📊</span>研究データ管理者<br><span style="font-size:10px;">データ分析</span></div>
                 </div>
             </div>
-
             <div id="stepSession" class="hidden">
                 <h3 id="sessionTitle" class="section-title" style="margin-top:0;">進行中の症例</h3>
-                
                 <div id="adminStockPanel" class="hidden" style="background:#f0f9ff; padding:10px; border-radius:8px; border:1px solid #bee3f8; margin-bottom:15px;">
                     <div style="font-weight:bold; color:#2b6cb0; font-size:12px; margin-bottom:5px;">📦 院内在庫マスター (即時反映)</div>
                     <div id="masterStockTableWrapper" style="overflow-x:auto;"></div>
                 </div>
-
                 <div id="researchPanel" class="hidden" style="background:#f0fff4; padding:15px; border-radius:8px; border:1px solid #9ae6b4; margin-bottom:15px; text-align:center;">
                     <h3 style="color:#276749; font-size:16px; margin-bottom:10px;">📊 研究用データベース</h3>
-                    <p style="font-size:11px; color:#4a5568; margin-bottom:15px;">完了した全症例の分析用データを<br>CSV形式で一括ダウンロードします。</p>
-                    <button class="btn btn-success" style="width:100%; padding:15px;" onclick="downloadAllResearchData()">📥 全症例データをCSV出力</button>
+                    <p style="font-size:11px; color:#4a5568; margin-bottom:15px;">全症例のTime to RBC, 比率遵守率,<br>TXA投与時間などを含む詳細分析データを出力。</p>
+                    <button class="btn btn-success" style="width:100%; padding:15px;" onclick="downloadAllResearchData()">📥 詳細解析データ(CSV)出力</button>
                 </div>
-
                 <div id="sessionList" style="display:flex; flex-direction:column; gap:8px;"></div>
-                
                 <div id="newSessionBlock" style="margin-top:20px; padding-top:15px; border-top:1px dashed #cbd5e0;">
                     <div style="font-size:12px; font-weight:bold; margin-bottom:5px;">新規MTP発動</div>
                     <div style="display:flex; gap:5px; align-items:center;">
@@ -323,7 +314,6 @@
                 <button class="btn btn-sm btn-outline" style="color:white; border-color:white; font-size:10px; padding:4px 8px;" onclick="exitSession()">退出</button>
             </div>
         </div>
-        
         <div class="stats-bar">
             <div class="stat-group" style="border-right:1px solid #e2e8f0;">
                 <span class="stat-label">📍 現場在庫 (未投与)</span>
@@ -345,18 +335,13 @@
     </header>
 
     <div class="main-viewport" id="mainViewport">
-        
         <div id="tabInventory" class="tab-view">
-            <div class="section-title">
-                🏥 院内在庫マスター
-                <span id="stockModeLabel" style="font-size:10px; font-weight:normal; color:#718096;">閲覧のみ</span>
-            </div>
+            <div class="section-title">🏥 院内在庫マスター <span id="stockModeLabel" style="font-size:10px; font-weight:normal; color:#718096;">閲覧のみ</span></div>
             <div id="viewStockTableWrapper"></div>
-            <p style="font-size:10px; color:#718096; margin-top:5px;">※輸血検査部のみ編集可能。タップしてダイヤルで変更。</p>
+            <p style="font-size:10px; color:#718096; margin-top:5px;">※輸血検査部のみ編集可能。</p>
         </div>
 
         <div id="tabAction" class="tab-view active-view">
-            
             <div id="bloodBig" class="blood-big">
                 <div style="font-size:10px; opacity:0.8;">BLOOD TYPE CONFIRMED</div>
                 <div id="bloodBigText" style="font-size:36px; font-weight:900;"></div>
@@ -386,9 +371,10 @@
                 <div class="doc-grid" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="doc-btn" id="btnFib" onclick="toggleMed('fib', 'フィブリノゲン')">フィブリノゲン</div>
                     <div class="doc-btn" id="btnTrans" onclick="toggleMed('trans', 'トランサミン')">トランサミン</div>
+                    <div class="doc-btn" id="btnCa" onclick="toggleMed('ca', 'カルチコール')">Ca製剤</div>
                     <div class="doc-btn" id="btnK2" onclick="toggleMed('k2', 'K2')">ケイツー</div>
-                    <div class="doc-btn" id="btnPrax" onclick="toggleMed('prax', 'プリズバインド')">プリズバインド</div>
                     <div class="doc-btn" id="btnKcentra" onclick="toggleMed('kcentra', 'ケイセントラ')">ケイセントラ</div>
+                    <div class="doc-btn" id="btnPrax" onclick="toggleMed('prax', 'プリズバインド')">プリズバインド</div>
                 </div>
             </div>
 
@@ -420,7 +406,6 @@
 
             <div class="section-title">📦 輸血バッグ状況</div>
             <div id="boxesContainer"></div>
-
             <div style="height:40px;"></div>
             <button id="btnComplete" class="btn btn-outline" style="width:100%; margin-bottom:20px;" onclick="moveToWard()">🏥 病棟入室 (完結)</button>
         </div>
@@ -431,28 +416,16 @@
         </div>
 
         <div id="tabSummary" class="tab-view">
-            <div class="section-title">
-                📝 記録サマリー
-                <button class="btn btn-sm btn-primary" onclick="copySummary()">コピー</button>
-            </div>
+            <div class="section-title">📝 記録サマリー <button class="btn btn-sm btn-primary" onclick="copySummary()">コピー</button></div>
             <textarea id="summaryText" style="width:100%; height:300px; padding:10px; font-size:11px; font-family:monospace; border:1px solid #cbd5e0; border-radius:6px;" readonly></textarea>
         </div>
-
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item" onclick="changeTab('tabInventory', this)">
-            <span class="nav-icon">📊</span>在庫
-        </div>
-        <div class="nav-item active" onclick="changeTab('tabAction', this)">
-            <span class="nav-icon">⚡</span>アクション
-        </div>
-        <div class="nav-item" onclick="changeTab('tabLog', this)">
-            <span class="nav-icon">💬</span>ログ
-        </div>
-        <div class="nav-item" onclick="changeTab('tabSummary', this)">
-            <span class="nav-icon">📝</span>サマリー
-        </div>
+        <div class="nav-item" onclick="changeTab('tabInventory', this)"><span class="nav-icon">📊</span>在庫</div>
+        <div class="nav-item active" onclick="changeTab('tabAction', this)"><span class="nav-icon">⚡</span>アクション</div>
+        <div class="nav-item" onclick="changeTab('tabLog', this)"><span class="nav-icon">💬</span>ログ</div>
+        <div class="nav-item" onclick="changeTab('tabSummary', this)"><span class="nav-icon">📝</span>サマリー</div>
     </nav>
 
     <div id="chatOverlay">
@@ -464,9 +437,6 @@
     </div>
 
     <script>
-        // =================================================================
-        // CONFIG
-        // =================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyDdqljAVfjGzKWAA1oWsbnwIphifYMnr-E",
             authDomain: "mtp-project-c8f20.firebaseapp.com",
@@ -478,23 +448,9 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        // ★追加: 認証機能の初期化
         const auth = firebase.auth();
+        auth.signInAnonymously().catch(e=>alert("Auth Error: "+e.message));
 
-        // ★追加: 匿名ログインを自動実行
-        auth.signInAnonymously()
-            .then(() => {
-                console.log("System: Anonymous login success.");
-            })
-            .catch((error) => {
-                console.error("System: Login failed", error);
-                // コンソールでのON設定を忘れている場合に気づけるようアラートを出す
-                alert("認証エラー詳細:\n" + error.code + "\n" + error.message);
-            });
-
-        // =================================================================
-        // STATE
-        // =================================================================
         let myRole = "";
         let currentSessionId = null;
         let currentSessionData = null;
@@ -504,16 +460,12 @@
         let unsubscribeInventory = null;
         let unsubscribeSession = null;
         let pickerTarget = null; 
-        let pickerValue = 0;
+        let swapTarget = null; // {bIdx, iIdx}
 
         const ROLES = {
-            MANAGER: ['研究データ管理者'],
-            ADMIN: ['輸血検査部'],
-            LEADER: ['チームリーダー'],
-            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'],
-            NURSE: ['記録Ns', '介助Ns'],
-            CE: ['臨床工学技師'],
-            TRANS: ['MTP搬送者', '臨床工学技師']
+            MANAGER: ['研究データ管理者'], ADMIN: ['輸血検査部'], LEADER: ['チームリーダー'],
+            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'], NURSE: ['記録Ns', '介助Ns'],
+            CE: ['臨床工学技師'], TRANS: ['MTP搬送者', '臨床工学技師']
         };
 
         const CANNED = {
@@ -523,27 +475,15 @@
             TRANS: ['到着', '次のオーダー依頼', '了解']
         };
 
-        // =================================================================
-        // UI & NAVIGATION
-        // =================================================================
         function generateAutoId() {
             const now = new Date();
-            const y = now.getFullYear();
-            const m = (now.getMonth()+1).toString().padStart(2, '0');
-            const d = now.getDate().toString().padStart(2, '0');
-            const h = now.getHours().toString().padStart(2, '0');
-            const min = now.getMinutes().toString().padStart(2, '0');
-            return `${y}${m}${d}${h}${min}`;
+            return `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
         }
 
         function selectRole(role) {
             if (ROLES.MANAGER.includes(role)) {
-                const id = prompt("管理者IDを入力してください");
-                if (id !== "185383") return alert("IDが正しくありません");
-                const pw = prompt("パスワードを入力してください");
-                if (pw !== "Love99mtp") return alert("パスワードが正しくありません");
+                if (prompt("管理者ID") !== "185383" || prompt("パスワード") !== "Love99mtp") return alert("認証失敗");
             }
-
             myRole = role;
             document.getElementById('hdRole').textContent = role;
             document.getElementById('stepRole').classList.add('hidden');
@@ -552,9 +492,7 @@
             const isManager = ROLES.MANAGER.includes(role);
             const isAdmin = ROLES.ADMIN.includes(role);
             
-            if(!isManager) {
-                document.getElementById('newPid').value = generateAutoId();
-            }
+            if(!isManager) document.getElementById('newPid').value = generateAutoId();
 
             if(isManager) {
                 document.getElementById('researchPanel').classList.remove('hidden');
@@ -576,10 +514,8 @@
                 document.getElementById('adminStockPanel').classList.add('hidden');
                 document.getElementById('sessionTitle').textContent = "進行中の症例";
             }
-
             document.getElementById('stockModeLabel').textContent = isAdmin ? "編集可能" : "閲覧のみ";
             renderStockTable('viewStockTableWrapper', isAdmin);
-
             startInventorySync();
             loadActiveSessions();
         }
@@ -592,17 +528,11 @@
 
         function exitSession() {
             if(!currentSessionId) return;
-            // Clean
-            currentSessionId = null;
-            currentSessionData = null;
-            bloodPopupShown = false;
-            lastBloodState = "";
+            currentSessionId = null; currentSessionData = null; bloodPopupShown = false; lastBloodState = "";
             document.getElementById('bloodBigText').textContent = "";
             document.getElementById('bloodBig').classList.remove('show');
             document.querySelectorAll('.bg-selected-blood').forEach(el => el.classList.remove('bg-selected-blood'));
-            
             document.getElementById('newPid').value = generateAutoId();
-
             if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession=null; }
             document.getElementById('loginModal').classList.add('active');
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
@@ -616,435 +546,274 @@
             document.getElementById(tabId).classList.add('active-view');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(navEl) navEl.classList.add('active');
-            
             const overlay = document.getElementById('chatOverlay');
             if(tabId === 'tabLog' && !document.getElementById('tabLog').classList.contains('read-only-overlay')) {
-                overlay.style.display = 'block';
-                renderCanned();
-            } else {
-                overlay.style.display = 'none';
-            }
+                overlay.style.display = 'block'; renderCanned();
+            } else { overlay.style.display = 'none'; }
         }
 
-        // =================================================================
-        // UI HELPERS (MOUSE/TOUCH)
-        // =================================================================
-        let touchStartX = 0;
-        let isMouseDown = false;
+        // Swipe & Wheel
+        let touchStartX=0; let isMouseDown=false;
         const viewport = document.getElementById('mainViewport');
-        
         viewport.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
-        viewport.addEventListener('touchend', e => { handleSwipe(touchStartX, e.changedTouches[0].screenX); });
-        
-        // PC Mouse Swipe
+        viewport.addEventListener('touchend', e => { if (e.changedTouches[0].screenX < touchStartX - 50) nextTab(); if (e.changedTouches[0].screenX > touchStartX + 50) prevTab(); });
         viewport.addEventListener('mousedown', e => { touchStartX = e.screenX; isMouseDown = true; });
-        viewport.addEventListener('mouseup', e => { if(isMouseDown) handleSwipe(touchStartX, e.screenX); isMouseDown = false; });
+        viewport.addEventListener('mouseup', e => { if(isMouseDown) { if (e.screenX < touchStartX - 50) nextTab(); if (e.screenX > touchStartX + 50) prevTab(); } isMouseDown = false; });
         viewport.addEventListener('mouseleave', () => isMouseDown = false);
+        function nextTab() { const c = document.querySelector('.nav-item.active'); if(c && c.nextElementSibling) c.nextElementSibling.click(); }
+        function prevTab() { const c = document.querySelector('.nav-item.active'); if(c && c.previousElementSibling) c.previousElementSibling.click(); }
 
-        function handleSwipe(start, end) {
-            if (end < start - 50) nextTab();
-            if (end > start + 50) prevTab();
-        }
-
-        function nextTab() {
-            const current = document.querySelector('.nav-item.active');
-            if(current && current.nextElementSibling) current.nextElementSibling.click();
-        }
-        function prevTab() {
-            const current = document.querySelector('.nav-item.active');
-            if(current && current.previousElementSibling) current.previousElementSibling.click();
-        }
-
-        // PC Mouse Drag for Picker
         const wheel = document.getElementById('pickerWheel');
-        let isWheelDown = false;
-        let wheelStartY;
-        let wheelStartScroll;
+        let isWheelDown=false, wY, wS;
+        wheel.addEventListener('mousedown', e=>{isWheelDown=true; wY=e.pageY; wS=wheel.scrollTop;});
+        wheel.addEventListener('mousemove', e=>{if(isWheelDown){e.preventDefault(); wheel.scrollTop=wS-(e.pageY-wY)*1.5;}});
+        wheel.addEventListener('mouseup', ()=>isWheelDown=false); wheel.addEventListener('mouseleave', ()=>isWheelDown=false);
 
-        wheel.addEventListener('mousedown', (e) => {
-            isWheelDown = true;
-            wheelStartY = e.pageY;
-            wheelStartScroll = wheel.scrollTop;
-        });
-        wheel.addEventListener('mousemove', (e) => {
-            if(!isWheelDown) return;
-            e.preventDefault();
-            const y = e.pageY;
-            const walk = (y - wheelStartY) * 1.5; 
-            wheel.scrollTop = wheelStartScroll - walk;
-        });
-        wheel.addEventListener('mouseup', () => isWheelDown = false);
-        wheel.addEventListener('mouseleave', () => isWheelDown = false);
-
-
-        // =================================================================
-        // INVENTORY LOGIC (DRUM PICKER)
-        // =================================================================
-        function renderStockTable(wrapperId, editable) {
-            const el = document.getElementById(wrapperId);
-            if(!el) return;
+        // Inventory
+        function renderStockTable(wId, editable) {
+            const el = document.getElementById(wId); if(!el) return;
             let html = `<table class="stock-table"><thead><tr><th></th><th>A</th><th>B</th><th>O</th><th>AB</th></tr></thead><tbody>`;
-            ['RBC','FFP','PC'].forEach(prod => {
-                html += `<tr><td style="font-weight:bold; background:#edf2f7; text-align:center;">${prod}</td>`;
-                ['A','B','O','AB'].forEach(type => {
-                    const id = `inv_${wrapperId}_${prod}_${type}`;
+            ['RBC','FFP','PC'].forEach(p => {
+                html += `<tr><td style="font-weight:bold; background:#edf2f7; text-align:center;">${p}</td>`;
+                ['A','B','O','AB'].forEach(t => {
+                    const id = `inv_${wId}_${p}_${t}`;
                     const cls = editable ? 'stock-display-btn editable' : 'stock-display-btn';
-                    const clickFn = editable ? `onclick="openPicker('${prod}','${type}')"` : '';
+                    const clickFn = editable ? `onclick="openPicker('${p}','${t}')"` : '';
                     html += `<td><div id="${id}" class="${cls}" ${clickFn}>-</div></td>`;
-                });
-                html += `</tr>`;
-            });
-            html += `</tbody></table>`;
-            el.innerHTML = html;
+                }); html += `</tr>`;
+            }); el.innerHTML = html + `</tbody></table>`;
         }
-
         function startInventorySync() {
             unsubscribeInventory = db.collection("master").doc("inventory").onSnapshot(doc => {
-                if(doc.exists) {
-                    hospitalStock = doc.data();
-                } else {
-                    hospitalStock = {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}};
-                    db.collection("master").doc("inventory").set(hospitalStock);
-                }
+                hospitalStock = doc.exists ? doc.data() : {RBC:{A:6,B:6,O:6,AB:6},FFP:{A:6,B:6,O:6,AB:6},PC:{A:10,B:10,O:10,AB:10}};
+                if(!doc.exists) db.collection("master").doc("inventory").set(hospitalStock);
                 updateAllStockDisplays();
             });
         }
-
         function updateAllStockDisplays() {
             ['masterStockTableWrapper', 'viewStockTableWrapper'].forEach(wId => {
                 if(document.getElementById(wId)) {
-                    ['RBC','FFP','PC'].forEach(p => {
-                        ['A','B','O','AB'].forEach(t => {
-                            const el = document.getElementById(`inv_${wId}_${p}_${t}`);
-                            if(el) {
-                                const val = (hospitalStock[p] && hospitalStock[p][t] !== undefined) ? hospitalStock[p][t] : (p==='PC'?10:6);
-                                el.textContent = val;
-                            }
-                        });
-                    });
+                    ['RBC','FFP','PC'].forEach(p => { ['A','B','O','AB'].forEach(t => {
+                        const el = document.getElementById(`inv_${wId}_${p}_${t}`);
+                        if(el) el.textContent = (hospitalStock[p]&&hospitalStock[p][t]!==undefined)?hospitalStock[p][t]:(p==='PC'?10:6);
+                    });});
                 }
             });
         }
-
         function openPicker(prod, type) {
             pickerTarget = {prod, type};
-            const currentVal = (hospitalStock[prod] && hospitalStock[prod][type] !== undefined) ? hospitalStock[prod][type] : (prod==='PC'?10:6);
+            const val = (hospitalStock[prod] && hospitalStock[prod][type] !== undefined) ? hospitalStock[prod][type] : (prod==='PC'?10:6);
             document.getElementById('pickerTitle').textContent = `${prod} (${type}型) 数量変更`;
             const wheel = document.getElementById('pickerWheel');
-            let html = "";
-            const step = (prod === 'PC') ? 10 : 2;
-            const max = (prod === 'PC') ? 200 : 100;
-            for(let i=0; i<=max; i+=step) {
-                html += `<div class="picker-item" data-val="${i}">${i}</div>`;
-            }
+            let html = ""; const step = (prod==='PC')?10:2;
+            for(let i=0; i<=((prod==='PC')?200:100); i+=step) html += `<div class="picker-item" data-val="${i}">${i}</div>`;
             wheel.innerHTML = html;
             document.getElementById('pickerModal').classList.add('show');
-            setTimeout(() => {
-                const targetIndex = currentVal / step;
-                wheel.scrollTop = targetIndex * 40;
-            }, 10);
+            setTimeout(() => { wheel.scrollTop = (val/step)*40; }, 10);
         }
-
         function confirmPicker() {
             if(!pickerTarget) return;
-            const wheel = document.getElementById('pickerWheel');
-            const index = Math.round(wheel.scrollTop / 40);
-            const step = (pickerTarget.prod === 'PC') ? 10 : 2;
-            const newVal = index * step;
-            db.collection("master").doc("inventory").update({
-                [`${pickerTarget.prod}.${pickerTarget.type}`]: newVal
-            });
-            closePicker();
+            const index = Math.round(document.getElementById('pickerWheel').scrollTop / 40);
+            const val = index * ((pickerTarget.prod==='PC')?10:2);
+            db.collection("master").doc("inventory").update({ [`${pickerTarget.prod}.${pickerTarget.type}`]: val });
+            document.getElementById('pickerModal').classList.remove('show'); pickerTarget = null;
         }
 
-        function closePicker() {
-            document.getElementById('pickerModal').classList.remove('show');
-            pickerTarget = null;
-        }
-
-        // =================================================================
-        // SESSION LOGIC
-        // =================================================================
+        // Session Logic
         function loadActiveSessions() {
             const list = document.getElementById('sessionList');
             db.collection("mtp_sessions").orderBy("start_time", "desc").limit(20).onSnapshot(snap => {
                 if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:20px; color:#a0aec0;'>なし</div>"; return; }
                 list.innerHTML = snap.docs.map(doc => {
-                    const d = doc.data();
-                    const isCompleted = d.status === 'completed';
-                    const delBtn = ROLES.LEADER.includes(myRole) ? `<div class="delete-icon-btn" onclick="deleteSession('${doc.id}', event)">🗑️</div>` : '';
-                    
-                    const statusText = isCompleted ? "【完了】履歴" : "進行中";
-                    const statusStyle = isCompleted ? "color:#718096; background:#edf2f7;" : "color:#3182ce; background:#ebf8ff;";
-                    const btnText = isCompleted ? "参照" : "参加";
-                    
-                    return `
-                    <div class="session-item" onclick="joinSession('${doc.id}')">
-                        ${delBtn}
-                        <div>
-                            <div style="font-weight:bold; font-size:16px;">${d.id} <span style="font-size:10px; padding:2px 4px; border-radius:4px; ${statusStyle}">${statusText}</span></div>
-                            <div style="font-size:11px; color:#718096;">${d.location} (${d.start_time})</div>
-                        </div>
-                        <button class="btn btn-sm btn-primary">${btnText}</button>
-                    </div>`;
+                    const d = doc.data(); const isC = d.status === 'completed';
+                    const del = ROLES.LEADER.includes(myRole) ? `<div class="delete-icon-btn" onclick="deleteSession('${doc.id}', event)">🗑️</div>` : '';
+                    return `<div class="session-item" onclick="joinSession('${doc.id}')">${del}
+                        <div><div style="font-weight:bold; font-size:16px;">${d.id} <span style="font-size:10px; padding:2px 4px; border-radius:4px; ${isC?"color:#718096; background:#edf2f7;":"color:#3182ce; background:#ebf8ff;"}">${isC?"【完了】履歴":"進行中"}</span></div>
+                        <div style="font-size:11px; color:#718096;">${d.location} (${d.start_time})</div></div>
+                        <button class="btn btn-sm btn-primary">${isC?"参照":"参加"}</button></div>`;
                 }).join("");
             });
         }
-
         function startNewSession() {
             const pid = document.getElementById('newPid').value.trim();
-            const loc = document.getElementById('newLoc').value;
-            if(!pid) return alert("IDを入力してください");
+            if(!pid) return alert("IDを入力");
             db.collection("mtp_sessions").doc(pid).set({
-                id: pid, location: loc, status: 'active',
+                id: pid, location: document.getElementById('newLoc').value, status: 'active',
                 start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
-                boxes: [], logs: [], chats: [],
-                used: {RBC:0, FFP:0, PC:0},
-                blood_res: {abo:'', rh:'', irreg:''}, 
-                flags: {}, meds: {}
+                boxes: [], logs: [], chats: [], used: {RBC:0, FFP:0, PC:0},
+                blood_res: {abo:'', rh:'', irreg:''}, flags: {}, meds: {}
             }).then(() => joinSession(pid));
         }
-
-        function deleteSession(id, e) {
-            e.stopPropagation();
-            if(confirm("【警告】本当に削除しますか？\nデータは復元できません。")) db.collection("mtp_sessions").doc(id).delete();
-        }
-
+        function deleteSession(id, e) { e.stopPropagation(); if(confirm("完全に削除しますか？")) db.collection("mtp_sessions").doc(id).delete(); }
         function joinSession(id) {
-            // Clean
-            lastBloodState = "";
-            bloodPopupShown = false; 
+            lastBloodState = ""; bloodPopupShown = false; 
             document.querySelectorAll('.bg-selected-blood').forEach(el=>el.classList.remove('bg-selected-blood'));
-
-            currentSessionId = id;
-            document.getElementById('hdPid').textContent = id;
+            currentSessionId = id; document.getElementById('hdPid').textContent = id;
             document.getElementById('loginModal').classList.remove('active');
             
-            const isDoc = ROLES.DOCTOR.includes(myRole);
-            const isCE = ROLES.CE.includes(myRole);
-            const isAdmin = ROLES.ADMIN.includes(myRole);
-            const isResident = (myRole === '研修医');
+            if(!ROLES.DOCTOR.includes(myRole)) document.getElementById('panelDoctor').classList.add('hidden');
+            if(ROLES.CE.includes(myRole)) document.getElementById('panelCE').classList.remove('hidden');
+            if(ROLES.ADMIN.includes(myRole)) document.getElementById('panelLab').classList.remove('hidden');
 
-            if(!isDoc) document.getElementById('panelDoctor').classList.add('hidden');
-            if(isCE) document.getElementById('panelCE').classList.remove('hidden');
-            if(isAdmin) document.getElementById('panelLab').classList.remove('hidden');
-
-            if(isResident) {
-                document.getElementById('declarationsBlock').style.display = 'none';
-                document.getElementById('btnComplete').style.display = 'none';
-            } else {
-                document.getElementById('declarationsBlock').style.display = 'block';
-                document.getElementById('btnComplete').style.display = 'block';
-            }
+            const isRes = (myRole === '研修医');
+            document.getElementById('declarationsBlock').style.display = isRes ? 'none' : 'block';
+            document.getElementById('btnComplete').style.display = isRes ? 'none' : 'block';
 
             unsubscribeSession = db.collection("mtp_sessions").doc(id).onSnapshot(doc => {
-                if(!doc.exists) { alert("症例が削除されました"); exitSession(); return; }
-                currentSessionData = doc.data();
-                renderScreen(currentSessionData);
+                if(!doc.exists) { alert("削除されました"); exitSession(); return; }
+                currentSessionData = doc.data(); renderScreen(currentSessionData);
             });
         }
 
-        // =================================================================
-        // RENDERING
-        // =================================================================
+        // Render Screen
         function renderScreen(data) {
-            const isReadOnly = data.status === 'completed';
-            
-            if(isReadOnly) {
+            const isRO = data.status === 'completed';
+            if(isRO) {
                 document.getElementById('tabAction').classList.add('read-only-overlay');
                 document.getElementById('tabInventory').classList.add('read-only-overlay');
-                document.getElementById('chatOverlay').style.display = 'none';
-                document.getElementById('btnComplete').style.display = 'none';
-                document.getElementById('hdStatus').textContent = "完了 (参照)";
-                document.getElementById('hdStatus').className = "status-badge st-completed";
+                document.getElementById('chatOverlay').style.display='none';
+                document.getElementById('btnComplete').style.display='none';
+                document.getElementById('hdStatus').textContent="完了"; document.getElementById('hdStatus').className="status-badge st-completed";
             } else {
                 document.getElementById('tabAction').classList.remove('read-only-overlay');
                 document.getElementById('tabInventory').classList.remove('read-only-overlay');
-                if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display = 'block';
-                if(myRole !== '研修医') document.getElementById('btnComplete').style.display = 'block';
-                const sb = document.getElementById('hdStatus');
-                sb.className = `status-badge st-${data.status}`;
-                sb.textContent = data.status==='active' ? '発動中' : '終了';
+                if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display='block';
+                if(myRole !== '研修医') document.getElementById('btnComplete').style.display='block';
+                document.getElementById('hdStatus').textContent="発動中"; document.getElementById('hdStatus').className="status-badge st-active";
             }
 
-            document.getElementById('uRBC').textContent = data.used.RBC;
-            document.getElementById('uFFP').textContent = data.used.FFP;
-            document.getElementById('uPC').textContent = data.used.PC;
-
+            // Stats
+            document.getElementById('uRBC').textContent = data.used.RBC; document.getElementById('uFFP').textContent = data.used.FFP; document.getElementById('uPC').textContent = data.used.PC;
             let s = {RBC:0, FFP:0, PC:0};
-            data.boxes.forEach(b => {
-                b.items.forEach(i => {
-                    if(i.status === 'arrived') {
-                        if(i.type.includes('RBC')) s.RBC += i.units;
-                        else if(i.type.includes('FFP')) s.FFP += i.units;
-                        else if(i.type.includes('PC')) s.PC += i.units;
-                    }
-                });
-            });
-            document.getElementById('sRBC').textContent = s.RBC;
-            document.getElementById('sFFP').textContent = s.FFP;
-            document.getElementById('sPC').textContent = s.PC;
+            data.boxes.forEach(b => { b.items.forEach(i => { if(i.status==='arrived'){ if(i.type.includes('RBC'))s.RBC+=i.units; else if(i.type.includes('FFP'))s.FFP+=i.units; else if(i.type.includes('PC'))s.PC+=i.units; } }); });
+            document.getElementById('sRBC').textContent = s.RBC; document.getElementById('sFFP').textContent = s.FFP; document.getElementById('sPC').textContent = s.PC;
 
-            // Blood Popup Logic
+            // Blood Popups
             if(data.blood_res.abo && data.blood_res.rh) {
-                const currentBlood = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
-                if(lastBloodState !== "" && lastBloodState !== currentBlood && !bloodPopupShown) {
-                    document.getElementById('bloodPopupText').textContent = currentBlood;
-                    const pop = document.getElementById('bloodPopup');
-                    pop.classList.remove('active');
-                    void pop.offsetWidth; 
-                    pop.classList.add('active');
-                    playBeep(); // BEEP SOUND
-                    setTimeout(()=>pop.classList.remove('active'), 3000);
-                    bloodPopupShown = true;
+                const cb = `${data.blood_res.abo} Rh(${data.blood_res.rh})`;
+                if(lastBloodState !== "" && lastBloodState !== cb && !bloodPopupShown) {
+                    document.getElementById('bloodPopupText').textContent = cb;
+                    const p = document.getElementById('bloodPopup'); p.classList.add('active');
+                    playBeep(); setTimeout(()=>p.classList.remove('active'), 3000); bloodPopupShown=true;
                 }
-                if(lastBloodState === "") lastBloodState = currentBlood;
-                
-                const bb = document.getElementById('bloodBig');
-                bb.classList.add('show');
-                document.getElementById('bloodBigText').textContent = currentBlood;
+                if(lastBloodState === "") lastBloodState = cb;
+                document.getElementById('bloodBig').classList.add('show'); document.getElementById('bloodBigText').textContent = cb;
             }
 
-            // Green Selection Logic
-            ['btnA','btnB','btnO','btnAB','btnRhP','btnRhM'].forEach(id => {
-                const b = document.getElementById(id);
-                if(b) b.classList.remove('bg-selected-blood');
-            });
-            if(data.blood_res.abo) {
-                document.getElementById('btn'+data.blood_res.abo).classList.add('bg-selected-blood');
-            }
-            if(data.blood_res.rh) {
-                const rid = data.blood_res.rh==='+' ? 'btnRhP' : 'btnRhM';
-                document.getElementById(rid).classList.add('bg-selected-blood');
-            }
+            // Styles
+            ['btnA','btnB','btnO','btnAB','btnRhP','btnRhM'].forEach(id => document.getElementById(id)?.classList.remove('bg-selected-blood'));
+            if(data.blood_res.abo) document.getElementById('btn'+data.blood_res.abo).classList.add('bg-selected-blood');
+            if(data.blood_res.rh) document.getElementById(data.blood_res.rh==='+'?'btnRhP':'btnRhM').classList.add('bg-selected-blood');
+            document.getElementById('btnIrregNeg').className = data.blood_res.irreg==='neg' ? "btn btn-sm btn-success" : "btn btn-sm btn-outline";
+            document.getElementById('btnIrregPos').className = data.blood_res.irreg==='pos' ? "btn btn-sm btn-danger" : "btn btn-sm btn-outline";
 
-            // Irregular Antibody Styles
-            const btnNeg = document.getElementById('btnIrregNeg');
-            const btnPos = document.getElementById('btnIrregPos');
-            btnNeg.className = "btn btn-sm btn-outline"; 
-            btnPos.className = "btn btn-sm btn-outline";
-            if(data.blood_res.irreg === 'neg') {
-                btnNeg.className = "btn btn-sm btn-success"; 
-            } else if(data.blood_res.irreg === 'pos') {
-                btnPos.className = "btn btn-sm btn-danger";
-            }
-
+            // Boxes
             const bc = document.getElementById('boxesContainer');
             bc.innerHTML = data.boxes.map((b, bIdx) => {
-                let batchHtml = "";
-                const allPending = b.items.every(i => i.status === 'pending');
-                const hasPrep = b.items.some(i => i.status === 'preparing');
-                const hasShipped = b.items.some(i => i.status === 'shipped');
-
-                if(!isReadOnly) {
+                let batch = "";
+                if(!isRO) {
                     if(ROLES.ADMIN.includes(myRole)) {
-                        if(allPending) batchHtml = `<button class="btn btn-sm btn-warn" onclick="batchAction(${bIdx}, 'preparing')">一括準備</button>`;
-                        else if(hasPrep) batchHtml = `<button class="btn btn-sm btn-primary" onclick="batchAction(${bIdx}, 'shipped')">一括出庫</button>`;
+                        if(b.items.every(i=>i.status==='pending')) batch=`<button class="btn btn-sm btn-warn" onclick="batchAction(${bIdx},'preparing')">一括準備</button>`;
+                        else if(b.items.some(i=>i.status==='preparing')) batch=`<button class="btn btn-sm btn-primary" onclick="batchAction(${bIdx},'shipped')">一括出庫</button>`;
                     }
-                    if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole)) {
-                        if(hasShipped) batchHtml = `<button class="btn btn-sm btn-success" onclick="batchAction(${bIdx}, 'arrived')">一括到着</button>`;
+                    if(ROLES.NURSE.includes(myRole)||ROLES.TRANS.includes(myRole)) {
+                        if(b.items.some(i=>i.status==='shipped')) batch=`<button class="btn btn-sm btn-success" onclick="batchAction(${bIdx},'arrived')">一括到着</button>`;
                     }
                 }
-
                 const rows = b.items.map((i, iIdx) => {
                     let btn = "";
-                    if(!isReadOnly) {
+                    if(!isRO) {
                         if(ROLES.ADMIN.includes(myRole)) {
-                            if(i.status==='pending') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'preparing')">準備</button>`;
-                            else if(i.status==='preparing') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'shipped')">出庫</button>`;
+                            if(i.status==='pending') btn=`<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'preparing')">準備</button>`;
+                            else if(i.status==='preparing') btn=`<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'shipped')">出庫</button>`;
                         }
-                        if(ROLES.NURSE.includes(myRole) || ROLES.TRANS.includes(myRole) || ROLES.CE.includes(myRole)) {
-                            if(i.status==='shipped') btn = `<button class="btn btn-sm btn-success" onclick="updateItem(${bIdx},${iIdx},'arrived')">到着</button>`;
-                            else if(i.status==='arrived') btn = `<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'infusing')">開始</button>`;
-                            else if(i.status==='infusing') btn = `<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
+                        if(ROLES.NURSE.includes(myRole)||ROLES.TRANS.includes(myRole)||ROLES.CE.includes(myRole)) {
+                            if(i.status==='shipped') btn=`<button class="btn btn-sm btn-success" onclick="updateItem(${bIdx},${iIdx},'arrived')">到着</button>`;
+                            else if(i.status==='arrived') btn=`<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'infusing')">開始</button>`;
+                            else if(i.status==='infusing') btn=`<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
                         }
                     }
-                    // Auto-Numbering Display (v37.0)
-                    let tagHtml = "";
-                    if(i.tag) tagHtml = `<span style="font-weight:bold; color:#e53e3e; font-size:14px; margin-left:5px;">${i.tag}</span>`;
-
-                    return `
-                    <div class="item-row">
-                        <div>${i.type} (${i.units}U)${tagHtml}</div>
-                        <div class="st-badge st-${i.status}">${i.status}</div>
-                        <div style="text-align:right;">${btn}</div>
-                    </div>`;
+                    // v40.0: Click name to swap (Admin Only)
+                    let nameAction = "";
+                    if(ROLES.ADMIN.includes(myRole) && (i.status==='pending'||i.status==='preparing')) {
+                        nameAction = `onclick="openTypeSwap(${bIdx},${iIdx})" style="cursor:pointer; text-decoration:underline; color:#2b6cb0;"`;
+                    }
+                    return `<div class="item-row"><div ${nameAction}>${i.type} (${i.units}U)${i.tag?`<span style="font-weight:bold; color:#e53e3e; margin-left:5px;">${i.tag}</span>`:""}</div>
+                    <div class="st-badge st-${i.status}">${i.status}</div><div style="text-align:right;">${btn}</div></div>`;
                 }).join("");
-
-                return `
-                <div class="box-card ${b.items.every(x=>x.status==='completed')?'':'active'}">
-                    <div class="box-header">
-                        <span class="box-title">📦 ${b.name}</span>
-                        <div>${batchHtml}</div>
-                    </div>
-                    ${rows}
-                </div>`;
+                return `<div class="box-card ${b.items.every(x=>x.status==='completed')?'':'active'}"><div class="box-header"><span class="box-title">📦 ${b.name}</span><div>${batch}</div></div>${rows}</div>`;
             }).join("");
 
-            const logs = [...(data.logs||[]), ...(data.chats||[])].sort((a,b) => a.t > b.t ? 1 : -1);
-            document.getElementById('logContainer').innerHTML = logs.slice().reverse().map(l => 
-                `<div class="log-item"><span class="log-time">${l.t}</span> <strong>${l.r}:</strong> ${l.m}</div>`
-            ).join("");
+            // Logs & Summary
+            const logs = [...(data.logs||[]), ...(data.chats||[])].sort((a,b)=>a.t>b.t?1:-1);
+            document.getElementById('logContainer').innerHTML = logs.slice().reverse().map(l=>`<div class="log-item"><span class="log-time">${l.t}</span> <strong>${l.r}:</strong> ${l.m}</div>`).join("");
+            
+            ['warn','blood','rapid'].forEach(k=>updateFlag('btn'+k.charAt(0).toUpperCase()+k.slice(1), data.flags?.[k], k==='warn'?'bg-warn':k==='blood'?'bg-blood':'bg-ce'));
+            ['fib','trans','k2','prax','kcentra','ca'].forEach(k=>updateFlag('btn'+k.charAt(0).toUpperCase()+k.slice(1), data.meds?.[k], 'bg-med'));
 
-            updateFlag('btnWarn', data.flags?.warn, 'bg-warn');
-            updateFlag('btnBlood', data.flags?.blood, 'bg-blood');
-            updateFlag('btnRapid', data.flags?.rapid, 'bg-ce');
-            ['fib','trans','k2','prax','kcentra'].forEach(k => updateFlag('btn'+k.charAt(0).toUpperCase()+k.slice(1), data.meds?.[k], 'bg-med'));
-
-            let sum = `【MTP記録 ID:${data.id}】${data.location}\n`;
-            sum += `総投与: RBC${data.used.RBC} / FFP${data.used.FFP} / PC${data.used.PC}\n`;
-            if(data.blood_res.abo) sum += `血液型: ${data.blood_res.abo}型 Rh(${data.blood_res.rh})\n`;
-            sum += `\n--- ログ ---\n`;
-            logs.forEach(l => sum += `[${l.t}] ${l.m}\n`);
+            let sum = `【MTP記録 ID:${data.id}】\n総投与: R${data.used.RBC}/F${data.used.FFP}/P${data.used.PC}\n`;
+            if(data.blood_res.abo) sum+=`血液型: ${data.blood_res.abo}${data.blood_res.rh}\n`;
+            sum+="\n--- LOGS ---\n"; logs.forEach(l=>sum+=`[${l.t}] ${l.m}\n`);
             document.getElementById('summaryText').value = sum;
         }
 
-        function updateFlag(id, isActive, bgClass) {
-            const el = document.getElementById(id);
-            if(!el) return;
-            if(isActive) { el.classList.add('active-on', bgClass); } 
-            else { el.classList.remove('active-on', bgClass); }
+        function updateFlag(id, on, cls) { const e=document.getElementById(id); if(e){ if(on)e.classList.add('active-on',cls); else e.classList.remove('active-on',cls); }}
+
+        // v40.0: Bag Type Swap Logic
+        function openTypeSwap(bIdx, iIdx) {
+            swapTarget = {bIdx, iIdx};
+            document.getElementById('typeSwapModal').classList.add('show');
+        }
+        function closeTypeSwap() {
+            document.getElementById('typeSwapModal').classList.remove('show');
+            swapTarget = null;
+        }
+        function confirmTypeSwap(newType) {
+            if(!swapTarget) return;
+            const ref = db.collection("mtp_sessions").doc(currentSessionId);
+            db.runTransaction(async t => {
+                const doc = await t.get(ref);
+                const d = doc.data();
+                const item = d.boxes[swapTarget.bIdx].items[swapTarget.iIdx];
+                const oldType = item.type;
+                
+                // Construct new type string (e.g., "A_RBC")
+                const prod = item.type.split('_')[1] || 'RBC';
+                item.type = `${newType}_${prod}`;
+                item.tag = "⚠️代替"; // Mark as substituted
+                
+                t.update(ref, { 
+                    boxes: d.boxes,
+                    logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`【置換】${oldType} ➔ ${item.type}`})
+                });
+            });
+            closeTypeSwap();
         }
 
-        // ... (Logic functions similar to v35.1) ...
+        // Action Logic
         function orderMTP(type) {
-            if (type === 2 && (!currentSessionData.blood_res || !currentSessionData.blood_res.abo)) {
-                return alert("⚠️ 血液型が確定していません。\n先に輸血検査部による血液型（ABO/Rh）の確定が必要です。");
-            }
-            const currentBoxes = currentSessionData.boxes || [];
+            if (type===2 && (!currentSessionData.blood_res?.abo)) return alert("血液型未確定");
+            const d = currentSessionData; const abo = d.blood_res.abo || 'O';
+            const count = (d.boxes||[]).filter(b=>b.name.startsWith(type===1?"BOX1":"BOX2")||b.name.startsWith("BOX3")).length;
             let newBoxes = [];
-            let logMsg = "";
-
             if(type===1) {
-                const count = currentBoxes.filter(b => b.name.startsWith("BOX1")).length + 1;
-                const name = `BOX1-${count} (異型)`;
-                const items = [
-                    {type:'O_RBC', units:2, status:'pending'}, {type:'O_RBC', units:2, status:'pending'}, {type:'O_RBC', units:2, status:'pending'},
-                    {type:'AB_FFP', units:2, status:'pending'}, {type:'AB_FFP', units:2, status:'pending'}, {type:'AB_FFP', units:2, status:'pending'}
-                ];
-                newBoxes.push({ name: name, items: items });
-                logMsg = `📦 オーダー① (${name}) 指示`;
+                newBoxes.push({name:`BOX1-${count+1} (異型)`, items:[
+                    {type:'O_RBC',units:2,status:'pending'},{type:'O_RBC',units:2,status:'pending'},{type:'O_RBC',units:2,status:'pending'},
+                    {type:'AB_FFP',units:2,status:'pending'},{type:'AB_FFP',units:2,status:'pending'},{type:'AB_FFP',units:2,status:'pending'}
+                ]});
             } else {
-                const abo = currentSessionData.blood_res.abo || 'O';
-                const count2 = currentBoxes.filter(b => b.name.startsWith("BOX2")).length + 1;
-                const count3 = currentBoxes.filter(b => b.name.startsWith("BOX3")).length + 1;
-                const name2 = `BOX2-${count2} (同型)`;
-                const items2 = [
-                    {type:abo+'_RBC', units:2, status:'pending'}, {type:abo+'_RBC', units:2, status:'pending'},
-                    {type:abo+'_FFP', units:2, status:'pending'}, {type:abo+'_FFP', units:2, status:'pending'}
-                ];
-                newBoxes.push({ name: name2, items: items2 });
-                const name3 = `BOX3-${count3} (PC含)`;
-                const items3 = [
-                    {type:abo+'_RBC', units:2, status:'pending'}, {type:abo+'_FFP', units:2, status:'pending'},
-                    {type:abo+'_PC', units:10, status:'pending'}, {type:abo+'_PC', units:10, status:'pending'}
-                ];
-                newBoxes.push({ name: name3, items: items3 });
-                logMsg = `📦 オーダー② (${name2} + ${name3}) 指示`;
+                newBoxes.push({name:`BOX2-${count+1} (同型)`, items:[
+                    {type:`${abo}_RBC`,units:2,status:'pending'},{type:`${abo}_RBC`,units:2,status:'pending'},
+                    {type:`${abo}_FFP`,units:2,status:'pending'},{type:`${abo}_FFP`,units:2,status:'pending'}
+                ]});
+                newBoxes.push({name:`BOX3-${count+1} (PC含)`, items:[
+                    {type:`${abo}_RBC`,units:2,status:'pending'},{type:`${abo}_FFP`,units:2,status:'pending'},
+                    {type:`${abo}_PC`,units:10,status:'pending'},{type:`${abo}_PC`,units:10,status:'pending'}
+                ]});
             }
             db.collection("mtp_sessions").doc(currentSessionId).update({
                 boxes: firebase.firestore.FieldValue.arrayUnion(...newBoxes),
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:logMsg})
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`オーダー${type===1?"①":"②"}指示`})
             });
         }
 
@@ -1054,34 +823,20 @@
                 const doc = await t.get(ref);
                 const d = doc.data();
                 const item = d.boxes[bIdx].items[iIdx];
-                if(nextSt === 'shipped' && item.status !== 'shipped') {
-                    let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
-                    let ty = item.type.split('_')[0] || 'O';
-                    if(hospitalStock[p][ty] < item.units) { alert(`⚠️ 在庫不足！\n${p}(${ty}型)不足`); return; }
+                if(nextSt==='shipped' && item.status!=='shipped') {
+                    const [ty, p] = item.type.split('_');
+                    if(hospitalStock[p][ty] < item.units) return alert(`在庫不足: ${item.type}`);
                     db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
                 }
-                
-                // Auto Numbering on Start (v37.0)
-                if(nextSt === 'infusing' && item.status !== 'infusing') {
-                    const prodType = item.type.includes('RBC') ? 'RBC' : (item.type.includes('FFP') ? 'FFP' : 'PC');
-                    let count = 0;
-                    d.boxes.forEach(box => {
-                        box.items.forEach(i => {
-                            const iType = i.type.includes('RBC') ? 'RBC' : (i.type.includes('FFP') ? 'FFP' : 'PC');
-                            if (iType === prodType && (i.status === 'infusing' || i.status === 'completed')) {
-                                count++;
-                            }
-                        });
-                    });
-                    const circleNum = (n) => {
-                        const circleMap = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
-                        return circleMap[n-1] || `(${n})`;
-                    };
-                    item.tag = circleNum(count + 1);
+                if(nextSt==='infusing' && item.status!=='infusing') {
+                    // Auto tag logic
+                    const myP = item.type.split('_')[1];
+                    let c=0; d.boxes.forEach(b=>b.items.forEach(i=>{ if(i.type.includes(myP) && (i.status==='infusing'||i.status==='completed')) c++; }));
+                    const map=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
+                    if(!item.tag) item.tag = map[c]||`(${c+1})`;
                 }
-
-                if(nextSt === 'completed') {
-                    let p = item.type.includes('RBC')?'RBC':item.type.includes('FFP')?'FFP':'PC';
+                if(nextSt==='completed') {
+                    const p = item.type.split('_')[1];
                     t.update(ref, { [`used.${p}`]: firebase.firestore.FieldValue.increment(item.units) });
                 }
                 item.status = nextSt;
@@ -1093,132 +848,115 @@
             if(!confirm("一括操作しますか？")) return;
             const ref = db.collection("mtp_sessions").doc(currentSessionId);
             db.runTransaction(async t => {
-                const doc = await t.get(ref);
-                const d = doc.data();
-                const box = d.boxes[bIdx];
-                let count = 0;
-                if(nextSt === 'shipped') {
-                    let required = {};
-                    box.items.forEach(i => {
-                        if(i.status === 'preparing') {
-                            let p = i.type.includes('RBC')?'RBC':i.type.includes('FFP')?'FFP':'PC';
-                            let ty = i.type.split('_')[0] || 'O';
-                            required[`${p}_${ty}`] = (required[`${p}_${ty}`] || 0) + i.units;
-                        }
-                    });
-                    for(let k in required) {
-                        let [p, ty] = k.split('_');
-                        if(hospitalStock[p][ty] < required[k]) { alert(`⚠️ 在庫不足！ ${p}(${ty}型)`); return; }
-                    }
+                const d = (await t.get(ref)).data(); const box = d.boxes[bIdx]; let count=0;
+                // Stock Check
+                if(nextSt==='shipped') {
+                    let req={}; box.items.forEach(i=>{ if(i.status==='preparing'){ const [ty,p]=i.type.split('_'); req[`${p}.${ty}`]=(req[`${p}.${ty}`]||0)+i.units; } });
+                    for(let k in req) { const [p,ty]=k.split('.'); if(hospitalStock[p][ty]<req[k]) return alert(`在庫不足: ${ty}_${p}`); }
                 }
                 box.items.forEach(i => {
-                    let doUp = false;
-                    if(nextSt==='preparing' && i.status==='pending') doUp=true;
-                    if(nextSt==='shipped' && i.status==='preparing') {
-                        let p = i.type.includes('RBC')?'RBC':i.type.includes('FFP')?'FFP':'PC';
-                        let ty = i.type.split('_')[0] || 'O';
-                        db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-i.units) });
-                        doUp=true;
+                    let go=false;
+                    if(nextSt==='preparing'&&i.status==='pending') go=true;
+                    if(nextSt==='shipped'&&i.status==='preparing') {
+                        const [ty,p]=i.type.split('_'); db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-i.units) }); go=true;
                     }
-                    if(nextSt==='arrived' && i.status==='shipped') doUp=true;
-                    if(doUp) { i.status = nextSt; count++; }
+                    if(nextSt==='arrived'&&i.status==='shipped') go=true;
+                    if(go){ i.status=nextSt; count++; }
                 });
-                if(count>0) { t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${box.name} 一括${nextSt} (${count})`}) }); }
+                if(count>0) t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${box.name} 一括${nextSt}`}) });
             });
         }
 
-        function toggleFlag(k, msg, bgClass) {
-            const v = !currentSessionData.flags?.[k];
-            db.collection("mtp_sessions").doc(currentSessionId).update({ [`flags.${k}`]: v, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${msg} ${v?'ON':'OFF'}`}) });
-        }
-        function toggleMed(k, msg) {
-            const v = !currentSessionData.meds?.[k];
-            db.collection("mtp_sessions").doc(currentSessionId).update({ [`meds.${k}`]: v, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`投与指示: ${msg} ${v?'ON':'OFF'}`}) });
-        }
+        function toggleFlag(k,m) { const v=!currentSessionData.flags?.[k]; db.collection("mtp_sessions").doc(currentSessionId).update({[`flags.${k}`]:v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`${m} ${v?'ON':'OFF'}`})}); }
+        function toggleMed(k,m) { const v=!currentSessionData.meds?.[k]; db.collection("mtp_sessions").doc(currentSessionId).update({[`meds.${k}`]:v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`投与: ${m} ${v?'ON':'OFF'}`})}); }
+        function setBlood(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.abo':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`血液型: ${v}`})}); }
+        function setRh(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.rh':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`Rh: ${v}`})}); }
+        function setIrreg(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.irreg':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`不規則抗体: ${v}`})}); }
+        function endMTP() { if(confirm("終了宣言しますか？")) db.collection("mtp_sessions").doc(currentSessionId).update({status:'ended'}); }
         
-        // --- v39.1: Auto Log for Lab Actions ---
-        function setBlood(val) { 
-            if(!ROLES.ADMIN.includes(myRole)) return; 
-            db.collection("mtp_sessions").doc(currentSessionId).update({ 
-                'blood_res.abo': val,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`血液型確定: ${val}型`})
-            }); 
-        }
-        function setRh(val) { 
-            if(!ROLES.ADMIN.includes(myRole)) return; 
-            db.collection("mtp_sessions").doc(currentSessionId).update({ 
-                'blood_res.rh': val,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`Rh確定: Rh(${val})`})
-            }); 
-        }
-        function setIrreg(val) { 
-            if(!ROLES.ADMIN.includes(myRole)) return; 
-            const msg = val==='pos' ? 'あり' : 'なし';
-            db.collection("mtp_sessions").doc(currentSessionId).update({ 
-                'blood_res.irreg': val,
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`不規則抗体: ${msg}`})
-            }); 
-        }
-
-        function endMTP() { if(confirm("終了宣言しますか？")) { db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'ended' }); } }
+        // v40.0: Research Data Logic
         function moveToWard() {
-            if(confirm("完結しますか？（研究用DBに保存されます）")) {
-                const d = currentSessionData; const now = new Date();
-                const findTime = (key) => { const f = d.logs.find(l=>l.m.includes(key)); return f?f.t:""; };
-                db.collection("research_logs").doc(d.id).set({
-                    id: d.id, location: d.location, date: now.toLocaleDateString(), startTime: d.start_time, endTime: now.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
-                    totalRBC: d.used.RBC, totalFFP: d.used.FFP, totalPC: d.used.PC, bloodType: `${d.blood_res.abo} ${d.blood_res.rh}`,
-                    firstOrder: findTime("オーダー"), firstShip: findTime("出庫"), firstArrive: findTime("到着")
-                });
-                db.collection("mtp_sessions").doc(currentSessionId).update({ status: 'completed' }).then(() => { alert("完了しました"); location.reload(); });
-            }
+            if(!confirm("完結しますか？（研究用DBに保存）")) return;
+            const d = currentSessionData; const now = new Date();
+            
+            // Helper to calc minutes diff
+            const getMin = (tStr) => { if(!tStr) return ""; const [h,m]=tStr.split(':'); return parseInt(h)*60+parseInt(m); };
+            const startMin = getMin(d.start_time);
+            const endMin = now.getHours()*60 + now.getMinutes();
+            const duration = (endMin >= startMin) ? (endMin - startMin) : (endMin + 1440 - startMin);
+
+            // Find timestamps from logs
+            const findTime = (k) => d.logs.find(l=>l.m.includes(k))?.t || "";
+            const timeFirstOrder = findTime("オーダー");
+            const timeFirstShip = findTime("出庫");
+            const timeFirstArrive = findTime("到着");
+            const timeTXA = findTime("トランサミン ON");
+
+            // Calculate Metrics
+            const calcLag = (t1, t2) => { if(!t1||!t2) return ""; return Math.abs(getMin(t2)-getMin(t1)); };
+            
+            // First RBC/FFP infusion time (scan boxes)
+            let firstRBC="", firstFFP="";
+            d.boxes.forEach(b=>{ b.items.forEach(i=>{ 
+                if((i.status==='infusing'||i.status==='completed')){
+                    // We don't track exact infusion time per item in v40, so we use "First Arrive" as proxy or "Infusing" logs if implemented. 
+                    // For now, we use the "到着" log as the closest proxy for "Available at bedside".
+                }
+            })});
+
+            // Count Deviations
+            let deviationCount = 0;
+            d.boxes.forEach(b=>b.items.forEach(i=>{ if(i.tag && i.tag.includes("代替")) deviationCount++; }));
+
+            db.collection("research_logs").doc(d.id).set({
+                id: d.id, location: d.location, date: now.toLocaleDateString(),
+                startTime: d.start_time, endTime: getTime(), durationMin: duration,
+                totalRBC: d.used.RBC, totalFFP: d.used.FFP, totalPC: d.used.PC,
+                ratio: d.used.FFP>0 ? (d.used.RBC/d.used.FFP).toFixed(2) : "N/A",
+                bloodType: `${d.blood_res.abo||'?'} ${d.blood_res.rh||'?'}`,
+                irregularAb: d.blood_res.irreg,
+                
+                // Time Metrics
+                timeOrder: timeFirstOrder, timeShip: timeFirstShip, timeArrive: timeFirstArrive,
+                tatMin: timeFirstArrive ? calcLag(d.start_time, timeFirstArrive) : "",
+                
+                // Meds & Flags
+                txa: d.meds?.trans ? "Yes" : "No", timeTXA: timeTXA,
+                fibrinogen: d.meds?.fib ? "Yes" : "No",
+                calcium: d.meds?.ca ? "Yes" : "No",
+                rapidInfuser: d.flags?.rapid ? "Yes" : "No",
+                
+                // Quality
+                protocolDeviation: deviationCount > 0 ? "Yes" : "No",
+                substitutedUnits: deviationCount
+            });
+
+            db.collection("mtp_sessions").doc(currentSessionId).update({status:'completed'})
+            .then(()=>{ alert("完了。データ保存済。"); location.reload(); });
         }
 
         function downloadAllResearchData() {
             db.collection("research_logs").get().then(snap => {
-                if(snap.empty) { alert("データなし"); return; }
-                let csv = "ID,Location,Date,Start,End,RBC,FFP,PC,BloodType,FirstOrder,FirstShip,FirstArrive\n";
-                snap.forEach(doc => { const d = doc.data(); csv += `${d.id},${d.location},${d.date},${d.startTime},${d.endTime},${d.totalRBC},${d.totalFFP},${d.totalPC},${d.bloodType},${d.firstOrder},${d.firstShip},${d.firstArrive}\n`; });
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `MTP_Research_${new Date().toLocaleDateString()}.csv`; a.click();
+                if(snap.empty) return alert("データなし");
+                // CSV Header
+                let csv = "ID,Location,Date,Duration(min),Total_RBC,Total_FFP,Total_PC,Ratio(R/F),BloodType,IrregAB,Time_Order,Time_Ship,Time_Arrive,TAT(min),TXA,Time_TXA,Fibrinogen,Calcium,RapidInfuser,Protocol_Deviation,Substituted_Units\n";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    csv += `${d.id},${d.location},${d.date},${d.durationMin},${d.totalRBC},${d.totalFFP},${d.totalPC},${d.ratio},${d.bloodType},${d.irregularAb},${d.timeOrder},${d.timeShip},${d.timeArrive},${d.tatMin},${d.txa},${d.timeTXA},${d.fibrinogen},${d.calcium},${d.rapidInfuser},${d.protocolDeviation},${d.substitutedUnits}\n`;
+                });
+                const a = document.createElement('a'); a.href = window.URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+                a.download = `MTP_Research_${new Date().toLocaleDateString()}.csv`; a.click();
             });
         }
 
-        function sendChat() {
-            const t = document.getElementById('chatInput').value; if(!t) return;
-            db.collection("mtp_sessions").doc(currentSessionId).update({ chats: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:t}) });
-            document.getElementById('chatInput').value = "";
-        }
+        function sendChat() { const t=document.getElementById('chatInput').value; if(!t)return; db.collection("mtp_sessions").doc(currentSessionId).update({chats:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:t})}); document.getElementById('chatInput').value=""; }
         function renderCanned() {
-            let list = CANNED.DOCTOR;
-            if(ROLES.ADMIN.includes(myRole)) list = CANNED.ADMIN;
-            if(ROLES.NURSE.includes(myRole)) list = CANNED.NURSE;
-            if(ROLES.TRANS.includes(myRole)) list = CANNED.TRANS;
-            document.getElementById('cannedArea').innerHTML = list.map(c => `<div class="canned-btn" onclick="document.getElementById('chatInput').value='${c}';sendChat()">${c}</div>`).join("");
+            let l=CANNED.DOCTOR; if(ROLES.ADMIN.includes(myRole))l=CANNED.ADMIN; if(ROLES.NURSE.includes(myRole))l=CANNED.NURSE; if(ROLES.TRANS.includes(myRole))l=CANNED.TRANS;
+            document.getElementById('cannedArea').innerHTML=l.map(c=>`<div class="canned-btn" onclick="document.getElementById('chatInput').value='${c}';sendChat()">${c}</div>`).join("");
         }
         function copySummary() { document.getElementById('summaryText').select(); document.execCommand('copy'); alert('コピーしました'); }
         function getTime() { return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
-
-        // --- BEEP SOUND FUNCTION ---
-        function playBeep() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const now = ctx.currentTime;
-                // 3 short beeps
-                [0, 0.2, 0.4].forEach(t => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.type = 'square';
-                    osc.frequency.value = 880; // A5
-                    gain.gain.setValueAtTime(0.1, now + t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.1);
-                    osc.start(now + t);
-                    osc.stop(now + t + 0.1);
-                });
-            } catch(e) { console.error("Audio error:", e); }
-        }
+        function playBeep() { try{const c=new(window.AudioContext||window.webkitAudioContext)();const t=c.currentTime;[0,0.2,0.4].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=880;g.gain.setValueAtTime(0.1,t+d);g.gain.exponentialRampToValueAtTime(0.001,t+d+0.1);o.start(t+d);o.stop(t+d+0.1);})}catch(e){}}
     </script>
 </body>
 </html>
