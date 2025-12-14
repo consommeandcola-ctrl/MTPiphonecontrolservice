@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v40.0 (Research Edition)</title>
+    <title>MTP Cloud Mobile v40.2 (Stable Fix)</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -38,10 +38,13 @@
         }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .role-pill { font-size: 10px; background: #4a5568; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
-        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; transition: 0.3s; }
         .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
         .st-standby { background: #718096; color: white; }
         .st-completed { background: #2f855a; color: white; }
+        /* ★修正: 終了宣言後のスタイルを追加 */
+        .st-ended { background: #171923; color: #cbd5e0; border: 1px solid #4a5568; }
 
         /* Stats Bar */
         .stats-bar {
@@ -679,7 +682,15 @@
                 document.getElementById('tabInventory').classList.remove('read-only-overlay');
                 if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display='block';
                 if(myRole !== '研修医') document.getElementById('btnComplete').style.display='block';
-                document.getElementById('hdStatus').textContent="発動中"; document.getElementById('hdStatus').className="status-badge st-active";
+                
+                // ★修正: 終了宣言状態の判定
+                if(data.status === 'ended') {
+                    document.getElementById('hdStatus').textContent="終了宣言"; 
+                    document.getElementById('hdStatus').className="status-badge st-ended";
+                } else {
+                    document.getElementById('hdStatus').textContent="発動中"; 
+                    document.getElementById('hdStatus').className="status-badge st-active";
+                }
             }
 
             // Stats
@@ -733,7 +744,6 @@
                             else if(i.status==='infusing') btn=`<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
                         }
                     }
-                    // v40.0: Click name to swap (Admin Only)
                     let nameAction = "";
                     if(ROLES.ADMIN.includes(myRole) && (i.status==='pending'||i.status==='preparing')) {
                         nameAction = `onclick="openTypeSwap(${bIdx},${iIdx})" style="cursor:pointer; text-decoration:underline; color:#2b6cb0;"`;
@@ -759,7 +769,7 @@
 
         function updateFlag(id, on, cls) { const e=document.getElementById(id); if(e){ if(on)e.classList.add('active-on',cls); else e.classList.remove('active-on',cls); }}
 
-        // v40.0: Bag Type Swap Logic
+        // v40.2: Bag Type Swap Logic Fix
         function openTypeSwap(bIdx, iIdx) {
             swapTarget = {bIdx, iIdx};
             document.getElementById('typeSwapModal').classList.add('show');
@@ -776,12 +786,9 @@
                 const d = doc.data();
                 const item = d.boxes[swapTarget.bIdx].items[swapTarget.iIdx];
                 const oldType = item.type;
-                
-                // Construct new type string (e.g., "A_RBC")
                 const prod = item.type.split('_')[1] || 'RBC';
                 item.type = `${newType}_${prod}`;
-                item.tag = "⚠️代替"; // Mark as substituted
-                
+                item.tag = "⚠️代替"; 
                 t.update(ref, { 
                     boxes: d.boxes,
                     logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`【置換】${oldType} ➔ ${item.type}`})
@@ -829,7 +836,6 @@
                     db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
                 }
                 if(nextSt==='infusing' && item.status!=='infusing') {
-                    // Auto tag logic
                     const myP = item.type.split('_')[1];
                     let c=0; d.boxes.forEach(b=>b.items.forEach(i=>{ if(i.type.includes(myP) && (i.status==='infusing'||i.status==='completed')) c++; }));
                     const map=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
@@ -849,7 +855,6 @@
             const ref = db.collection("mtp_sessions").doc(currentSessionId);
             db.runTransaction(async t => {
                 const d = (await t.get(ref)).data(); const box = d.boxes[bIdx]; let count=0;
-                // Stock Check
                 if(nextSt==='shipped') {
                     let req={}; box.items.forEach(i=>{ if(i.status==='preparing'){ const [ty,p]=i.type.split('_'); req[`${p}.${ty}`]=(req[`${p}.${ty}`]||0)+i.units; } });
                     for(let k in req) { const [p,ty]=k.split('.'); if(hospitalStock[p][ty]<req[k]) return alert(`在庫不足: ${ty}_${p}`); }
@@ -874,37 +879,19 @@
         function setIrreg(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.irreg':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`不規則抗体: ${v}`})}); }
         function endMTP() { if(confirm("終了宣言しますか？")) db.collection("mtp_sessions").doc(currentSessionId).update({status:'ended'}); }
         
-        // v40.0: Research Data Logic
         function moveToWard() {
             if(!confirm("完結しますか？（研究用DBに保存）")) return;
             const d = currentSessionData; const now = new Date();
-            
-            // Helper to calc minutes diff
             const getMin = (tStr) => { if(!tStr) return ""; const [h,m]=tStr.split(':'); return parseInt(h)*60+parseInt(m); };
             const startMin = getMin(d.start_time);
             const endMin = now.getHours()*60 + now.getMinutes();
             const duration = (endMin >= startMin) ? (endMin - startMin) : (endMin + 1440 - startMin);
-
-            // Find timestamps from logs
             const findTime = (k) => d.logs.find(l=>l.m.includes(k))?.t || "";
             const timeFirstOrder = findTime("オーダー");
             const timeFirstShip = findTime("出庫");
             const timeFirstArrive = findTime("到着");
             const timeTXA = findTime("トランサミン ON");
-
-            // Calculate Metrics
             const calcLag = (t1, t2) => { if(!t1||!t2) return ""; return Math.abs(getMin(t2)-getMin(t1)); };
-            
-            // First RBC/FFP infusion time (scan boxes)
-            let firstRBC="", firstFFP="";
-            d.boxes.forEach(b=>{ b.items.forEach(i=>{ 
-                if((i.status==='infusing'||i.status==='completed')){
-                    // We don't track exact infusion time per item in v40, so we use "First Arrive" as proxy or "Infusing" logs if implemented. 
-                    // For now, we use the "到着" log as the closest proxy for "Available at bedside".
-                }
-            })});
-
-            // Count Deviations
             let deviationCount = 0;
             d.boxes.forEach(b=>b.items.forEach(i=>{ if(i.tag && i.tag.includes("代替")) deviationCount++; }));
 
@@ -915,22 +902,15 @@
                 ratio: d.used.FFP>0 ? (d.used.RBC/d.used.FFP).toFixed(2) : "N/A",
                 bloodType: `${d.blood_res.abo||'?'} ${d.blood_res.rh||'?'}`,
                 irregularAb: d.blood_res.irreg,
-                
-                // Time Metrics
                 timeOrder: timeFirstOrder, timeShip: timeFirstShip, timeArrive: timeFirstArrive,
                 tatMin: timeFirstArrive ? calcLag(d.start_time, timeFirstArrive) : "",
-                
-                // Meds & Flags
                 txa: d.meds?.trans ? "Yes" : "No", timeTXA: timeTXA,
                 fibrinogen: d.meds?.fib ? "Yes" : "No",
                 calcium: d.meds?.ca ? "Yes" : "No",
                 rapidInfuser: d.flags?.rapid ? "Yes" : "No",
-                
-                // Quality
                 protocolDeviation: deviationCount > 0 ? "Yes" : "No",
                 substitutedUnits: deviationCount
             });
-
             db.collection("mtp_sessions").doc(currentSessionId).update({status:'completed'})
             .then(()=>{ alert("完了。データ保存済。"); location.reload(); });
         }
@@ -938,7 +918,6 @@
         function downloadAllResearchData() {
             db.collection("research_logs").get().then(snap => {
                 if(snap.empty) return alert("データなし");
-                // CSV Header
                 let csv = "ID,Location,Date,Duration(min),Total_RBC,Total_FFP,Total_PC,Ratio(R/F),BloodType,IrregAB,Time_Order,Time_Ship,Time_Arrive,TAT(min),TXA,Time_TXA,Fibrinogen,Calcium,RapidInfuser,Protocol_Deviation,Substituted_Units\n";
                 snap.forEach(doc => {
                     const d = doc.data();
