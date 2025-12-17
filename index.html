@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MTP Cloud Mobile v40.2 (Stable Fix)</title>
+    <title>MTP Cloud Mobile v42.0 (Stable)</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -30,6 +30,41 @@
         }
         input, textarea, select { user-select: text; }
 
+        /* --- Toast Notification --- */
+        #toastContainer {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            max-width: 90%;
+        }
+        .toast {
+            background: #2d3748;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            pointer-events: all;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success { background: #38a169; }
+        .toast.warning { background: #dd6b20; }
+        .toast.error { background: #e53e3e; }
+
         /* --- Header --- */
         .app-header {
             background: #1a202c; color: white; padding: 8px 10px;
@@ -43,7 +78,6 @@
         .st-active { background: #e53e3e; color: white; animation: pulse 2s infinite; }
         .st-standby { background: #718096; color: white; }
         .st-completed { background: #2f855a; color: white; }
-        /* ★修正: 終了宣言後のスタイルを追加 */
         .st-ended { background: #171923; color: #cbd5e0; border: 1px solid #4a5568; }
 
         /* Stats Bar */
@@ -57,6 +91,7 @@
         .stat-label { font-size: 10px; font-weight: bold; color: #4a5568; margin-bottom: 2px; }
         .stat-vals { display: flex; gap: 10px; font-size: 16px; font-weight: 900; font-family: monospace; }
         .c-red { color: #e53e3e; } .c-yel { color: #d69e2e; } .c-blu { color: #3182ce; }
+        .stat-breakdown { font-size: 9px; color: #718096; margin-top: 4px; line-height: 1.4; text-align: center; width: 100%; }
 
         /* --- Main Viewport --- */
         .main-viewport { flex: 1; position: relative; overflow: hidden; background: #f7fafc; cursor: grab; }
@@ -149,7 +184,11 @@
             text-align: left; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: relative; overflow: hidden; transition: transform 0.1s; cursor: pointer;
         }
-        .mtp-btn:active { transform: scale(0.98); }
+        .mtp-btn:active:not(:disabled) { transform: scale(0.98); }
+        .mtp-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .mtp-btn-1 { background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%); }
         .mtp-btn-2 { background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%); }
         .mtp-head { font-size: 16px; font-weight: 900; display: block; margin-bottom: 2px; }
@@ -170,10 +209,33 @@
         .bg-ce { background: #d69e2e !important; }
         .bg-selected-blood { background: #38a169 !important; color: white !important; border-color: #2f855a !important; }
 
-        .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border-left: 4px solid #cbd5e0; }
+        .box-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; overflow: hidden; border-left: 4px solid #cbd5e0; position: relative; }
         .box-card.active { border-left-color: #3182ce; background: #f7fcff; }
         .box-header { padding: 8px 10px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center; }
         .box-title { font-weight: bold; font-size: 14px; color: #2d3748; }
+        .box-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 28px;
+            height: 28px;
+            background: #fff;
+            border: 2px solid #e53e3e;
+            color: #e53e3e;
+            border-radius: 50%;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+        .box-delete-btn:active {
+            background: #e53e3e;
+            color: white;
+        }
         .item-row { display: grid; grid-template-columns: 3fr 2fr 2fr; gap: 5px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; font-size: 12px; }
         .st-badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; text-align: center; background: #edf2f7; color: #718096; white-space: nowrap; }
         
@@ -188,6 +250,7 @@
         .btn-primary { background: #3182ce; } .btn-danger { background: #e53e3e; }
         .btn-success { background: #38a169; } .btn-warn { background: #dd6b20; }
         .btn-outline { background: transparent; border: 1px solid #cbd5e0; color: #4a5568; }
+        .btn-return { background: #805ad5; }
 
         /* Log & Chat */
         .log-container { display: flex; flex-direction: column; gap: 6px; padding-bottom: 60px; }
@@ -223,6 +286,8 @@
     </style>
 </head>
 <body>
+
+    <div id="toastContainer"></div>
 
     <div id="pickerModal">
         <div class="picker-sheet">
@@ -319,20 +384,22 @@
         </div>
         <div class="stats-bar">
             <div class="stat-group" style="border-right:1px solid #e2e8f0;">
-                <span class="stat-label">📍 現場在庫 (未投与)</span>
+                <span class="stat-label" id="sLabel">📍 現場在庫 (未投与)</span>
                 <div class="stat-vals">
                     <span class="c-red">R<span id="sRBC">0</span></span>
                     <span class="c-yel">F<span id="sFFP">0</span></span>
                     <span class="c-blu">P<span id="sPC">0</span></span>
                 </div>
+                <div class="stat-breakdown" id="sBreakdown"></div>
             </div>
             <div class="stat-group">
-                <span class="stat-label">💉 実施輸血量 (完了)</span>
+                <span class="stat-label" id="uLabel">💉 実施輸血量 (完了)</span>
                 <div class="stat-vals">
                     <span class="c-red">R<span id="uRBC">0</span></span>
                     <span class="c-yel">F<span id="uFFP">0</span></span>
                     <span class="c-blu">P<span id="uPC">0</span></span>
                 </div>
+                <div class="stat-breakdown" id="uBreakdown"></div>
             </div>
         </div>
     </header>
@@ -352,11 +419,11 @@
 
             <div id="panelDoctor">
                 <div class="section-title">⚡ オーダー</div>
-                <button class="mtp-btn mtp-btn-1" onclick="orderMTP(1)">
+                <button class="mtp-btn mtp-btn-1" id="orderBtn1" onclick="orderMTP(1)">
                     <span class="mtp-head">① 異型適合血 オーダー</span>
                     <span class="mtp-sub">BOX1: O型RBC(3) + AB型FFP(3)</span>
                 </button>
-                <button class="mtp-btn mtp-btn-2" onclick="orderMTP(2)">
+                <button class="mtp-btn mtp-btn-2" id="orderBtn2" onclick="orderMTP(2)">
                     <span class="mtp-head">② 同型血 オーダー (要血型)</span>
                     <span class="mtp-sub">BOX2(同型) + BOX3(PC含) を追加</span>
                 </button>
@@ -463,12 +530,16 @@
         let unsubscribeInventory = null;
         let unsubscribeSession = null;
         let pickerTarget = null; 
-        let swapTarget = null; // {bIdx, iIdx}
+        let swapTarget = null;
 
         const ROLES = {
-            MANAGER: ['研究データ管理者'], ADMIN: ['輸血検査部'], LEADER: ['チームリーダー'],
-            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'], NURSE: ['記録Ns', '介助Ns'],
-            CE: ['臨床工学技師'], TRANS: ['MTP搬送者', '臨床工学技師']
+            MANAGER: ['研究データ管理者'], 
+            ADMIN: ['輸血検査部'], 
+            LEADER: ['チームリーダー'],
+            DOCTOR: ['チームリーダー', '研修医', '輸血責任者'], 
+            NURSE: ['記録Ns', '介助Ns'],
+            CE: ['臨床工学技師'], 
+            TRANS: ['MTP搬送者', '臨床工学技師']
         };
 
         const CANNED = {
@@ -477,6 +548,21 @@
             NURSE: ['到着', '投与開始', '急速輸血中', '血型提出済'],
             TRANS: ['到着', '次のオーダー依頼', '了解']
         };
+
+        // ===== Toast Notification System =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => container.removeChild(toast), 300);
+            }, 3000);
+        }
 
         function generateAutoId() {
             const now = new Date();
@@ -642,25 +728,47 @@
             if(!pid) return alert("IDを入力");
             db.collection("mtp_sessions").doc(pid).set({
                 id: pid, location: document.getElementById('newLoc').value, status: 'active',
-                start_time: new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}),
+                start_time: getTimeMinutes(),
                 boxes: [], logs: [], chats: [], used: {RBC:0, FFP:0, PC:0},
                 blood_res: {abo:'', rh:'', irreg:''}, flags: {}, meds: {}
             }).then(() => joinSession(pid));
         }
         function deleteSession(id, e) { e.stopPropagation(); if(confirm("完全に削除しますか？")) db.collection("mtp_sessions").doc(id).delete(); }
+        
         function joinSession(id) {
             lastBloodState = ""; bloodPopupShown = false; 
             document.querySelectorAll('.bg-selected-blood').forEach(el=>el.classList.remove('bg-selected-blood'));
             currentSessionId = id; document.getElementById('hdPid').textContent = id;
             document.getElementById('loginModal').classList.remove('active');
             
-            if(!ROLES.DOCTOR.includes(myRole)) document.getElementById('panelDoctor').classList.add('hidden');
-            if(ROLES.CE.includes(myRole)) document.getElementById('panelCE').classList.remove('hidden');
-            if(ROLES.ADMIN.includes(myRole)) document.getElementById('panelLab').classList.remove('hidden');
+            // ★修正: 初期パネル表示の設定（renderScreen前に実行）
+            const isDoctor = ROLES.DOCTOR.includes(myRole);
+            const isCE = ROLES.CE.includes(myRole);
+            const isAdmin = ROLES.ADMIN.includes(myRole);
+            const isResearch = myRole === '研修医';
 
-            const isRes = (myRole === '研修医');
-            document.getElementById('declarationsBlock').style.display = isRes ? 'none' : 'block';
-            document.getElementById('btnComplete').style.display = isRes ? 'none' : 'block';
+            // デフォルトで全て非表示
+            document.getElementById('panelDoctor').classList.add('hidden');
+            document.getElementById('panelCE').classList.add('hidden');
+            document.getElementById('panelLab').classList.add('hidden');
+
+            // 役割に応じて表示
+            if(isDoctor) {
+                document.getElementById('panelDoctor').classList.remove('hidden');
+            }
+            if(isCE) {
+                document.getElementById('panelCE').classList.remove('hidden');
+            }
+            if(isAdmin) {
+                document.getElementById('panelLab').classList.remove('hidden');
+            }
+
+            // 研修医は宣言ボタン非表示
+            document.getElementById('declarationsBlock').style.display = isResearch ? 'none' : 'block';
+            
+            // 病棟入室ボタンはチームリーダーと記録Nsのみ表示
+            const canComplete = (myRole === 'チームリーダー' || myRole === '記録Ns');
+            document.getElementById('btnComplete').style.display = canComplete ? 'block' : 'none';
 
             unsubscribeSession = db.collection("mtp_sessions").doc(id).onSnapshot(doc => {
                 if(!doc.exists) { alert("削除されました"); exitSession(); return; }
@@ -681,9 +789,11 @@
                 document.getElementById('tabAction').classList.remove('read-only-overlay');
                 document.getElementById('tabInventory').classList.remove('read-only-overlay');
                 if(document.getElementById('tabLog').classList.contains('active-view')) document.getElementById('chatOverlay').style.display='block';
-                if(myRole !== '研修医') document.getElementById('btnComplete').style.display='block';
                 
-                // ★修正: 終了宣言状態の判定
+                // 病棟入室ボタンはチームリーダーと記録Nsのみ表示
+                const canComplete = (myRole === 'チームリーダー' || myRole === '記録Ns');
+                document.getElementById('btnComplete').style.display = canComplete ? 'block' : 'none';
+                
                 if(data.status === 'ended') {
                     document.getElementById('hdStatus').textContent="終了宣言"; 
                     document.getElementById('hdStatus').className="status-badge st-ended";
@@ -694,10 +804,77 @@
             }
 
             // Stats
-            document.getElementById('uRBC').textContent = data.used.RBC; document.getElementById('uFFP').textContent = data.used.FFP; document.getElementById('uPC').textContent = data.used.PC;
+            const confirmedType = data.blood_res?.abo || null;
+            
+            // 現場在庫の血液型別集計
             let s = {RBC:0, FFP:0, PC:0};
-            data.boxes.forEach(b => { b.items.forEach(i => { if(i.status==='arrived'){ if(i.type.includes('RBC'))s.RBC+=i.units; else if(i.type.includes('FFP'))s.FFP+=i.units; else if(i.type.includes('PC'))s.PC+=i.units; } }); });
-            document.getElementById('sRBC').textContent = s.RBC; document.getElementById('sFFP').textContent = s.FFP; document.getElementById('sPC').textContent = s.PC;
+            let sDetail = {RBC:{}, FFP:{}, PC:{}};
+            data.boxes.forEach(b => { 
+                b.items.forEach(i => { 
+                    if(i.status==='arrived'){ 
+                        const [ty, p] = i.type.split('_');
+                        if(p==='RBC' || p==='FFP' || p==='PC') {
+                            s[p] += i.units;
+                            sDetail[p][ty] = (sDetail[p][ty] || 0) + i.units;
+                        }
+                    } 
+                });
+            });
+            
+            document.getElementById('sRBC').textContent = s.RBC; 
+            document.getElementById('sFFP').textContent = s.FFP; 
+            document.getElementById('sPC').textContent = s.PC;
+            
+            // 現場在庫の内訳表示
+            let sBreakdownText = [];
+            if(s.RBC > 0) {
+                let rbcTypes = Object.entries(sDetail.RBC).map(([t,u])=>`${t}型${u}U`).join(', ');
+                sBreakdownText.push(`RBC: ${rbcTypes}`);
+            }
+            if(s.FFP > 0) {
+                let ffpTypes = Object.entries(sDetail.FFP).map(([t,u])=>`${t}型${u}U`).join(', ');
+                sBreakdownText.push(`FFP: ${ffpTypes}`);
+            }
+            if(s.PC > 0) {
+                let pcTypes = Object.entries(sDetail.PC).map(([t,u])=>`${t}型${u}U`).join(', ');
+                sBreakdownText.push(`PC: ${pcTypes}`);
+            }
+            document.getElementById('sBreakdown').innerHTML = sBreakdownText.join('<br>');
+            
+            // 実施輸血量の血液型別集計
+            let u = {RBC:0, FFP:0, PC:0};
+            let uDetail = {RBC:{}, FFP:{}, PC:{}};
+            data.boxes.forEach(b => { 
+                b.items.forEach(i => { 
+                    if(i.status==='completed'){ 
+                        const [ty, p] = i.type.split('_');
+                        if(p==='RBC' || p==='FFP' || p==='PC') {
+                            u[p] += i.units;
+                            uDetail[p][ty] = (uDetail[p][ty] || 0) + i.units;
+                        }
+                    } 
+                });
+            });
+            
+            document.getElementById('uRBC').textContent = u.RBC;
+            document.getElementById('uFFP').textContent = u.FFP;
+            document.getElementById('uPC').textContent = u.PC;
+            
+            // 実施輸血量の内訳表示
+            let uBreakdownText = [];
+            if(u.RBC > 0) {
+                let rbcTypes = Object.entries(uDetail.RBC).map(([t,u])=>`${t}型${u}U`).join(', ');
+                uBreakdownText.push(`RBC: ${rbcTypes}`);
+            }
+            if(u.FFP > 0) {
+                let ffpTypes = Object.entries(uDetail.FFP).map(([t,u])=>`${t}型${u}U`).join(', ');
+                uBreakdownText.push(`FFP: ${ffpTypes}`);
+            }
+            if(u.PC > 0) {
+                let pcTypes = Object.entries(uDetail.PC).map(([t,u])=>`${t}型${u}U`).join(', ');
+                uBreakdownText.push(`PC: ${pcTypes}`);
+            }
+            document.getElementById('uBreakdown').innerHTML = uBreakdownText.join('<br>');
 
             // Blood Popups
             if(data.blood_res.abo && data.blood_res.rh) {
@@ -718,8 +895,11 @@
             document.getElementById('btnIrregNeg').className = data.blood_res.irreg==='neg' ? "btn btn-sm btn-success" : "btn btn-sm btn-outline";
             document.getElementById('btnIrregPos').className = data.blood_res.irreg==='pos' ? "btn btn-sm btn-danger" : "btn btn-sm btn-outline";
 
-            // Boxes
+            // Boxes with Delete & Return buttons
             const bc = document.getElementById('boxesContainer');
+            const canDelete = ROLES.DOCTOR.includes(myRole) || ROLES.NURSE.includes(myRole);
+            const canReturn = ROLES.NURSE.includes(myRole);
+            
             bc.innerHTML = data.boxes.map((b, bIdx) => {
                 let batch = "";
                 if(!isRO) {
@@ -731,6 +911,9 @@
                         if(b.items.some(i=>i.status==='shipped')) batch=`<button class="btn btn-sm btn-success" onclick="batchAction(${bIdx},'arrived')">一括到着</button>`;
                     }
                 }
+                
+                const deleteBtn = (!isRO && canDelete) ? `<div class="box-delete-btn" onclick="deleteBox(${bIdx})">×</div>` : '';
+                
                 const rows = b.items.map((i, iIdx) => {
                     let btn = "";
                     if(!isRO) {
@@ -743,6 +926,10 @@
                             else if(i.status==='arrived') btn=`<button class="btn btn-sm btn-primary" onclick="updateItem(${bIdx},${iIdx},'infusing')">開始</button>`;
                             else if(i.status==='infusing') btn=`<button class="btn btn-sm btn-outline" onclick="updateItem(${bIdx},${iIdx},'completed')">完了</button>`;
                         }
+                        // 返納ボタン (shipped/arrived状態のみ)
+                        if(canReturn && (i.status==='shipped' || i.status==='arrived' || i.status==='pending' || i.status==='preparing')) {
+                            btn += ` <button class="btn btn-sm btn-return" onclick="returnItem(${bIdx},${iIdx})">返納</button>`;
+                        }
                     }
                     let nameAction = "";
                     if(ROLES.ADMIN.includes(myRole) && (i.status==='pending'||i.status==='preparing')) {
@@ -751,25 +938,129 @@
                     return `<div class="item-row"><div ${nameAction}>${i.type} (${i.units}U)${i.tag?`<span style="font-weight:bold; color:#e53e3e; margin-left:5px;">${i.tag}</span>`:""}</div>
                     <div class="st-badge st-${i.status}">${i.status}</div><div style="text-align:right;">${btn}</div></div>`;
                 }).join("");
-                return `<div class="box-card ${b.items.every(x=>x.status==='completed')?'':'active'}"><div class="box-header"><span class="box-title">📦 ${b.name}</span><div>${batch}</div></div>${rows}</div>`;
+                return `<div class="box-card ${b.items.every(x=>x.status==='completed')?'':'active'}">${deleteBtn}<div class="box-header"><span class="box-title">📦 ${b.name}</span><div>${batch}</div></div>${rows}</div>`;
             }).join("");
 
             // Logs & Summary
-            const logs = [...(data.logs||[]), ...(data.chats||[])].sort((a,b)=>a.t>b.t?1:-1);
-            document.getElementById('logContainer').innerHTML = logs.slice().reverse().map(l=>`<div class="log-item"><span class="log-time">${l.t}</span> <strong>${l.r}:</strong> ${l.m}</div>`).join("");
+            const logs = [...(data.logs||[]), ...(data.chats||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
+            document.getElementById('logContainer').innerHTML = logs.map(l=>`<div class="log-item"><span class="log-time">${l.t}</span> <strong>${l.r}:</strong> ${l.m}</div>`).join("");
             
             ['warn','blood','rapid'].forEach(k=>updateFlag('btn'+k.charAt(0).toUpperCase()+k.slice(1), data.flags?.[k], k==='warn'?'bg-warn':k==='blood'?'bg-blood':'bg-ce'));
             ['fib','trans','k2','prax','kcentra','ca'].forEach(k=>updateFlag('btn'+k.charAt(0).toUpperCase()+k.slice(1), data.meds?.[k], 'bg-med'));
 
-            let sum = `【MTP記録 ID:${data.id}】\n総投与: R${data.used.RBC}/F${data.used.FFP}/P${data.used.PC}\n`;
-            if(data.blood_res.abo) sum+=`血液型: ${data.blood_res.abo}${data.blood_res.rh}\n`;
-            sum+="\n--- LOGS ---\n"; logs.forEach(l=>sum+=`[${l.t}] ${l.m}\n`);
+            // サマリー生成
+            let sum = `【MTP記録 ID:${data.id}】\n`;
+            sum += `場所: ${data.location}\n`;
+            sum += `発動時刻: ${data.start_time}\n`;
+            
+            // 血液型情報
+            if(data.blood_res.abo) {
+                sum += `血液型: ${data.blood_res.abo} Rh(${data.blood_res.rh||'?'})`;
+                if(data.blood_res.irreg) sum += ` / 不規則抗体:${data.blood_res.irreg}`;
+                sum += '\n';
+            }
+            
+            // 輸血量統計（血液型別）
+            sum += '\n=== 輸血量統計 ===\n';
+            if(u.RBC > 0) {
+                let rbcDetail = Object.entries(uDetail.RBC).map(([t,units])=>`${t}型${units}U`).join(', ');
+                sum += `RBC: ${u.RBC}U (${rbcDetail})\n`;
+            } else {
+                sum += `RBC: 0U\n`;
+            }
+            if(u.FFP > 0) {
+                let ffpDetail = Object.entries(uDetail.FFP).map(([t,units])=>`${t}型${units}U`).join(', ');
+                sum += `FFP: ${u.FFP}U (${ffpDetail})\n`;
+            } else {
+                sum += `FFP: 0U\n`;
+            }
+            if(u.PC > 0) {
+                let pcDetail = Object.entries(uDetail.PC).map(([t,units])=>`${t}型${units}U`).join(', ');
+                sum += `PC: ${u.PC}U (${pcDetail})\n`;
+            } else {
+                sum += `PC: 0U\n`;
+            }
+            
+            // 比率
+            if(u.FFP > 0) {
+                sum += `RBC:FFP比 = ${(u.RBC/u.FFP).toFixed(2)}:1\n`;
+            }
+            
+            // 異型輸血の集計
+            let incompatibleRBC = 0, incompatibleFFP = 0;
+            if(data.blood_res.abo) {
+                Object.entries(uDetail.RBC).forEach(([t,units])=>{
+                    if(t !== data.blood_res.abo) incompatibleRBC += units;
+                });
+                Object.entries(uDetail.FFP).forEach(([t,units])=>{
+                    if(t !== data.blood_res.abo) incompatibleFFP += units;
+                });
+            }
+            if(incompatibleRBC > 0 || incompatibleFFP > 0) {
+                sum += '\n=== 異型輸血 ===\n';
+                if(incompatibleRBC > 0) sum += `異型RBC: ${incompatibleRBC}U\n`;
+                if(incompatibleFFP > 0) sum += `異型FFP: ${incompatibleFFP}U\n`;
+            }
+            
+            // 時間統計
+            const infusingLogs = data.logs.filter(l=>l.m.includes('投与開始'));
+            if(infusingLogs.length > 0) {
+                sum += '\n=== 輸血時間 ===\n';
+                const firstInfusion = infusingLogs[0];
+                sum += `初回輸血: ${firstInfusion.t.substring(0,5)} (${firstInfusion.m})\n`;
+                
+                // 各製剤の初回投与時刻
+                const firstRBC = infusingLogs.find(l=>l.m.includes('RBC'));
+                const firstFFP = infusingLogs.find(l=>l.m.includes('FFP'));
+                const firstPC = infusingLogs.find(l=>l.m.includes('PC'));
+                if(firstRBC) sum += `初回RBC: ${firstRBC.t.substring(0,5)}\n`;
+                if(firstFFP) sum += `初回FFP: ${firstFFP.t.substring(0,5)}\n`;
+                if(firstPC) sum += `初回PC: ${firstPC.t.substring(0,5)}\n`;
+                
+                // Time to first RBC
+                if(firstRBC && data.start_time) {
+                    const getMin = (tStr) => { 
+                        const parts = tStr.split(':');
+                        return parseInt(parts[0])*60 + parseInt(parts[1]);
+                    };
+                    const lag = getMin(firstRBC.t) - getMin(data.start_time);
+                    sum += `Time to First RBC: ${lag}分\n`;
+                }
+            }
+            
+            // 平均輸血速度（仮想計算：発動時刻から現在まで）
+            if(infusingLogs.length > 0 && (u.RBC > 0 || u.FFP > 0 || u.PC > 0)) {
+                const now = new Date();
+                const getMin = (tStr) => { 
+                    if(!tStr) return 0;
+                    const parts = tStr.split(':');
+                    return parseInt(parts[0])*60 + parseInt(parts[1]);
+                };
+                const startMin = getMin(data.start_time);
+                const currentMin = now.getHours()*60 + now.getMinutes();
+                let duration = currentMin - startMin;
+                if(duration < 0) duration += 1440; // 日付をまたぐ場合
+                
+                if(duration > 0) {
+                    sum += '\n=== 平均輸血速度 ===\n';
+                    if(u.RBC > 0) sum += `RBC: ${(u.RBC/duration*60).toFixed(1)} U/時間\n`;
+                    if(u.FFP > 0) sum += `FFP: ${(u.FFP/duration*60).toFixed(1)} U/時間\n`;
+                    if(u.PC > 0) sum += `PC: ${(u.PC/duration*60).toFixed(1)} U/時間\n`;
+                }
+            }
+            
+            sum+="\n=== ログ ===\n"; 
+            // サマリーは過去から現在の順（昇順）
+            [...logs].reverse().forEach(l => {
+                const timeForSummary = l.t ? l.t.substring(0, 5) : '';
+                sum += `[${timeForSummary}] ${l.m}\n`;
+            });
             document.getElementById('summaryText').value = sum;
         }
 
         function updateFlag(id, on, cls) { const e=document.getElementById(id); if(e){ if(on)e.classList.add('active-on',cls); else e.classList.remove('active-on',cls); }}
 
-        // v40.2: Bag Type Swap Logic Fix
+        // Type Swap Logic
         function openTypeSwap(bIdx, iIdx) {
             swapTarget = {bIdx, iIdx};
             document.getElementById('typeSwapModal').classList.add('show');
@@ -791,18 +1082,106 @@
                 item.tag = "⚠️代替"; 
                 t.update(ref, { 
                     boxes: d.boxes,
-                    logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`【置換】${oldType} ➔ ${item.type}`})
+                    logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`【置換】${oldType} ➔ ${item.type}`})
                 });
             });
             closeTypeSwap();
         }
 
-        // Action Logic
+        // ===== NEW: BOX Delete Function =====
+        function deleteBox(bIdx) {
+            if(!confirm("このBOXを削除しますか？\n出庫済みのアイテムは在庫に戻ります。")) return;
+            
+            const ref = db.collection("mtp_sessions").doc(currentSessionId);
+            db.runTransaction(async t => {
+                const doc = await t.get(ref);
+                const d = doc.data();
+                const box = d.boxes[bIdx];
+                
+                // 出庫済みアイテムを在庫に戻す
+                box.items.forEach(item => {
+                    if(item.status === 'shipped' || item.status === 'arrived') {
+                        const [ty, p] = item.type.split('_');
+                        db.collection("master").doc("inventory").update({
+                            [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(item.units)
+                        });
+                    }
+                });
+                
+                // BOX削除
+                d.boxes.splice(bIdx, 1);
+                t.update(ref, { 
+                    boxes: d.boxes,
+                    logs: firebase.firestore.FieldValue.arrayUnion({
+                        t: getTime(),
+                        ts: Date.now(),
+                        r: myRole, 
+                        m: `【BOX削除】${box.name} (在庫返納済)`
+                    })
+                });
+            }).then(() => {
+                showToast('BOXを削除しました', 'success');
+            });
+        }
+
+        // ===== NEW: Item Return Function =====
+        function returnItem(bIdx, iIdx) {
+            if(!confirm("このアイテムを返納しますか？\n在庫に戻ります。")) return;
+            
+            const ref = db.collection("mtp_sessions").doc(currentSessionId);
+            db.runTransaction(async t => {
+                const doc = await t.get(ref);
+                const d = doc.data();
+                const item = d.boxes[bIdx].items[iIdx];
+                
+                // 在庫に戻す (shipped/arrived以降のみ)
+                if(item.status === 'shipped' || item.status === 'arrived') {
+                    const [ty, p] = item.type.split('_');
+                    db.collection("master").doc("inventory").update({
+                        [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(item.units)
+                    });
+                }
+                
+                // アイテムを配列から削除
+                d.boxes[bIdx].items.splice(iIdx, 1);
+                
+                // BOXが空になったら削除
+                if(d.boxes[bIdx].items.length === 0) {
+                    d.boxes.splice(bIdx, 1);
+                }
+                
+                t.update(ref, { 
+                    boxes: d.boxes,
+                    logs: firebase.firestore.FieldValue.arrayUnion({
+                        t: getTime(),
+                        ts: Date.now(),
+                        r: myRole, 
+                        m: `【返納】${item.type} (${item.units}U)`
+                    })
+                });
+            }).then(() => {
+                showToast('返納しました', 'success');
+            });
+        }
+
+        // ===== IMPROVED: Order MTP with Toast & Button Disable =====
         function orderMTP(type) {
-            if (type===2 && (!currentSessionData.blood_res?.abo)) return alert("血液型未確定");
-            const d = currentSessionData; const abo = d.blood_res.abo || 'O';
+            if (type===2 && (!currentSessionData.blood_res?.abo)) {
+                showToast('血液型が未確定です', 'error');
+                return;
+            }
+            
+            const btnId = `orderBtn${type}`;
+            const btn = document.getElementById(btnId);
+            
+            // ボタン無効化（連打防止）
+            btn.disabled = true;
+            
+            const d = currentSessionData; 
+            const abo = d.blood_res.abo || 'O';
             const count = (d.boxes||[]).filter(b=>b.name.startsWith(type===1?"BOX1":"BOX2")||b.name.startsWith("BOX3")).length;
             let newBoxes = [];
+            
             if(type===1) {
                 newBoxes.push({name:`BOX1-${count+1} (異型)`, items:[
                     {type:'O_RBC',units:2,status:'pending'},{type:'O_RBC',units:2,status:'pending'},{type:'O_RBC',units:2,status:'pending'},
@@ -818,9 +1197,21 @@
                     {type:`${abo}_PC`,units:10,status:'pending'},{type:`${abo}_PC`,units:10,status:'pending'}
                 ]});
             }
+            
             db.collection("mtp_sessions").doc(currentSessionId).update({
                 boxes: firebase.firestore.FieldValue.arrayUnion(...newBoxes),
-                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`オーダー${type===1?"①":"②"}指示`})
+                logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`オーダー${type===1?"①":"②"}指示`})
+            }).then(() => {
+                // トースト通知
+                showToast(`オーダー${type===1?"①":"②"}を送信しました`, 'success');
+                
+                // 2秒後にボタン再有効化
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 2000);
+            }).catch(() => {
+                showToast('オーダー送信に失敗しました', 'error');
+                btn.disabled = false;
             });
         }
 
@@ -830,23 +1221,43 @@
                 const doc = await t.get(ref);
                 const d = doc.data();
                 const item = d.boxes[bIdx].items[iIdx];
+                
                 if(nextSt==='shipped' && item.status!=='shipped') {
                     const [ty, p] = item.type.split('_');
-                    if(hospitalStock[p][ty] < item.units) return alert(`在庫不足: ${item.type}`);
+                    if(hospitalStock[p][ty] < item.units) {
+                        showToast(`在庫不足: ${item.type}`, 'error');
+                        return;
+                    }
                     db.collection("master").doc("inventory").update({ [`${p}.${ty}`]: firebase.firestore.FieldValue.increment(-item.units) });
                 }
+                
+                // 投与開始時：タグ付与とログ記録
                 if(nextSt==='infusing' && item.status!=='infusing') {
                     const myP = item.type.split('_')[1];
-                    let c=0; d.boxes.forEach(b=>b.items.forEach(i=>{ if(i.type.includes(myP) && (i.status==='infusing'||i.status==='completed')) c++; }));
+                    let c=0; 
+                    d.boxes.forEach(b=>b.items.forEach(i=>{ 
+                        if(i.type.includes(myP) && (i.status==='infusing'||i.status==='completed')) c++; 
+                    }));
                     const map=["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫","⑬","⑭","⑮","⑯","⑰","⑱","⑲","⑳"];
                     if(!item.tag) item.tag = map[c]||`(${c+1})`;
+                    
+                    // ログに投与開始を記録
+                    d.logs = d.logs || [];
+                    d.logs.push({
+                        t: getTime(),
+                        ts: Date.now(),
+                        r: myRole,
+                        m: `${item.type} ${item.tag} 投与開始 (${item.units}U)`
+                    });
                 }
+                
                 if(nextSt==='completed') {
                     const p = item.type.split('_')[1];
                     t.update(ref, { [`used.${p}`]: firebase.firestore.FieldValue.increment(item.units) });
                 }
+                
                 item.status = nextSt;
-                t.update(ref, { boxes: d.boxes });
+                t.update(ref, { boxes: d.boxes, logs: d.logs });
             });
         }
 
@@ -857,7 +1268,7 @@
                 const d = (await t.get(ref)).data(); const box = d.boxes[bIdx]; let count=0;
                 if(nextSt==='shipped') {
                     let req={}; box.items.forEach(i=>{ if(i.status==='preparing'){ const [ty,p]=i.type.split('_'); req[`${p}.${ty}`]=(req[`${p}.${ty}`]||0)+i.units; } });
-                    for(let k in req) { const [p,ty]=k.split('.'); if(hospitalStock[p][ty]<req[k]) return alert(`在庫不足: ${ty}_${p}`); }
+                    for(let k in req) { const [p,ty]=k.split('.'); if(hospitalStock[p][ty]<req[k]) { showToast(`在庫不足: ${ty}_${p}`, 'error'); return; } }
                 }
                 box.items.forEach(i => {
                     let go=false;
@@ -868,25 +1279,71 @@
                     if(nextSt==='arrived'&&i.status==='shipped') go=true;
                     if(go){ i.status=nextSt; count++; }
                 });
-                if(count>0) t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), r:myRole, m:`${box.name} 一括${nextSt}`}) });
+                if(count>0) t.update(ref, { boxes: d.boxes, logs: firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`${box.name} 一括${nextSt}`}) });
+            }).then(() => {
+                showToast('一括操作完了', 'success');
             });
         }
 
-        function toggleFlag(k,m) { const v=!currentSessionData.flags?.[k]; db.collection("mtp_sessions").doc(currentSessionId).update({[`flags.${k}`]:v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`${m} ${v?'ON':'OFF'}`})}); }
-        function toggleMed(k,m) { const v=!currentSessionData.meds?.[k]; db.collection("mtp_sessions").doc(currentSessionId).update({[`meds.${k}`]:v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`投与: ${m} ${v?'ON':'OFF'}`})}); }
-        function setBlood(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.abo':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`血液型: ${v}`})}); }
-        function setRh(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.rh':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`Rh: ${v}`})}); }
-        function setIrreg(v) { if(!ROLES.ADMIN.includes(myRole))return; db.collection("mtp_sessions").doc(currentSessionId).update({'blood_res.irreg':v, logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:`不規則抗体: ${v}`})}); }
-        function endMTP() { if(confirm("終了宣言しますか？")) db.collection("mtp_sessions").doc(currentSessionId).update({status:'ended'}); }
+        function toggleFlag(k,m) { 
+            const v=!currentSessionData.flags?.[k]; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                [`flags.${k}`]:v, 
+                logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`${m} ${v?'ON':'OFF'}`})
+            });
+        }
+        function toggleMed(k,m) { 
+            const v=!currentSessionData.meds?.[k]; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                [`meds.${k}`]:v, 
+                logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`投与: ${m} ${v?'ON':'OFF'}`})
+            });
+        }
+        function setBlood(v) { 
+            if(!ROLES.ADMIN.includes(myRole))return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                'blood_res.abo':v, 
+                logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`血液型: ${v}`})
+            });
+        }
+        function setRh(v) { 
+            if(!ROLES.ADMIN.includes(myRole))return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                'blood_res.rh':v, 
+                logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`Rh: ${v}`})
+            });
+        }
+        function setIrreg(v) { 
+            if(!ROLES.ADMIN.includes(myRole))return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                'blood_res.irreg':v, 
+                logs:firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:`不規則抗体: ${v}`})
+            });
+        }
+        function endMTP() { 
+            if(confirm("終了宣言しますか？")) {
+                db.collection("mtp_sessions").doc(currentSessionId).update({status:'ended'});
+                showToast('MTP終了宣言しました', 'warning');
+            }
+        }
         
         function moveToWard() {
             if(!confirm("完結しますか？（研究用DBに保存）")) return;
             const d = currentSessionData; const now = new Date();
-            const getMin = (tStr) => { if(!tStr) return ""; const [h,m]=tStr.split(':'); return parseInt(h)*60+parseInt(m); };
+            const getMin = (tStr) => { 
+                if(!tStr) return ""; 
+                const parts = tStr.split(':');
+                const h = parseInt(parts[0]);
+                const m = parseInt(parts[1]);
+                return h*60+m; 
+            };
             const startMin = getMin(d.start_time);
             const endMin = now.getHours()*60 + now.getMinutes();
             const duration = (endMin >= startMin) ? (endMin - startMin) : (endMin + 1440 - startMin);
-            const findTime = (k) => d.logs.find(l=>l.m.includes(k))?.t || "";
+            const findTime = (k) => {
+                const log = d.logs.find(l=>l.m.includes(k));
+                return log ? (log.t.substring(0, 5)) : ""; // HH:MM:SS -> HH:MM
+            };
             const timeFirstOrder = findTime("オーダー");
             const timeFirstShip = findTime("出庫");
             const timeFirstArrive = findTime("到着");
@@ -897,7 +1354,7 @@
 
             db.collection("research_logs").doc(d.id).set({
                 id: d.id, location: d.location, date: now.toLocaleDateString(),
-                startTime: d.start_time, endTime: getTime(), durationMin: duration,
+                startTime: d.start_time, endTime: getTimeMinutes(), durationMin: duration,
                 totalRBC: d.used.RBC, totalFFP: d.used.FFP, totalPC: d.used.PC,
                 ratio: d.used.FFP>0 ? (d.used.RBC/d.used.FFP).toFixed(2) : "N/A",
                 bloodType: `${d.blood_res.abo||'?'} ${d.blood_res.rh||'?'}`,
@@ -912,7 +1369,10 @@
                 substitutedUnits: deviationCount
             });
             db.collection("mtp_sessions").doc(currentSessionId).update({status:'completed'})
-            .then(()=>{ alert("完了。データ保存済。"); location.reload(); });
+            .then(()=>{ 
+                showToast('完了しました。データ保存済。', 'success');
+                setTimeout(() => location.reload(), 2000);
+            });
         }
 
         function downloadAllResearchData() {
@@ -928,14 +1388,46 @@
             });
         }
 
-        function sendChat() { const t=document.getElementById('chatInput').value; if(!t)return; db.collection("mtp_sessions").doc(currentSessionId).update({chats:firebase.firestore.FieldValue.arrayUnion({t:getTime(),r:myRole,m:t})}); document.getElementById('chatInput').value=""; }
+        function sendChat() { 
+            const t=document.getElementById('chatInput').value; 
+            if(!t)return; 
+            db.collection("mtp_sessions").doc(currentSessionId).update({
+                chats:firebase.firestore.FieldValue.arrayUnion({t:getTime(), ts:Date.now(), r:myRole, m:t})
+            }); 
+            document.getElementById('chatInput').value=""; 
+        }
         function renderCanned() {
-            let l=CANNED.DOCTOR; if(ROLES.ADMIN.includes(myRole))l=CANNED.ADMIN; if(ROLES.NURSE.includes(myRole))l=CANNED.NURSE; if(ROLES.TRANS.includes(myRole))l=CANNED.TRANS;
+            let l=CANNED.DOCTOR; 
+            if(ROLES.ADMIN.includes(myRole))l=CANNED.ADMIN; 
+            if(ROLES.NURSE.includes(myRole))l=CANNED.NURSE; 
+            if(ROLES.TRANS.includes(myRole))l=CANNED.TRANS;
             document.getElementById('cannedArea').innerHTML=l.map(c=>`<div class="canned-btn" onclick="document.getElementById('chatInput').value='${c}';sendChat()">${c}</div>`).join("");
         }
-        function copySummary() { document.getElementById('summaryText').select(); document.execCommand('copy'); alert('コピーしました'); }
-        function getTime() { return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
-        function playBeep() { try{const c=new(window.AudioContext||window.webkitAudioContext)();const t=c.currentTime;[0,0.2,0.4].forEach(d=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=880;g.gain.setValueAtTime(0.1,t+d);g.gain.exponentialRampToValueAtTime(0.001,t+d+0.1);o.start(t+d);o.stop(t+d+0.1);})}catch(e){}}
+        function copySummary() { 
+            document.getElementById('summaryText').select(); 
+            document.execCommand('copy'); 
+            showToast('コピーしました', 'success');
+        }
+        function getTime() { 
+            return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); 
+        }
+        function getTimeMinutes() {
+            return new Date().toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
+        }
+        function playBeep() { 
+            try{
+                const c=new(window.AudioContext||window.webkitAudioContext)();
+                const t=c.currentTime;
+                [0,0.2,0.4].forEach(d=>{
+                    const o=c.createOscillator(),g=c.createGain();
+                    o.connect(g);g.connect(c.destination);
+                    o.type='square';o.frequency.value=880;
+                    g.gain.setValueAtTime(0.1,t+d);
+                    g.gain.exponentialRampToValueAtTime(0.001,t+d+0.1);
+                    o.start(t+d);o.stop(t+d+0.1);
+                });
+            }catch(e){}
+        }
     </script>
 </body>
 </html>
